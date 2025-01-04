@@ -142,8 +142,11 @@ function clearTable() {
     var circle = []
     for (var p = 0; p < players.length; p++) {
         circle.push(0)
+        players[p].score = localStorage.getItem("max_val");
+        $(".text-bg-secondary").removeClass("text-bg-success").addClass("text-bg-secondary")
     }
     circles.push(circle)
     localStorage.setItem('circles', JSON.stringify(circles));
+    localStorage.setItem('players', JSON.stringify(players));
     location.reload();
 }
