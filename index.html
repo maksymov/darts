@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="static/jquery-3.7.0.min.js"></script>
+  <script src="static/fontawesome/all.min.js"></script>
+  <script src="static/script.js"></script>
+  <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
+  <title>Таблица для игры в дартс</title>
+</head>
+
+<body>
+  <nav class="navbar bg-dark border-bottom border-body navbar-expand-lg" data-bs-theme="dark">
+    <div class="container-fluid">
+      <div>
+        <button class="btn btn-success me-2" type="button" onclick="openModal('Начальные очки', false, 'new_game')">
+          <i class="fa-solid fa-bullseye"></i>
+          Новая игра
+        </button>
+        <button class="btn btn-outline-info me-2" type="button" onclick="openModal('Новый игрок', false, 'add_player')">
+          <i class="fa-solid fa-user-plus"></i>
+          Добавить игрока
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container text-center mt-4 sticky-top" style="background-color: white;">
+    <div class="row" id="players">
+      
+    </div>
+  </div>
+
+  <div class="container text-center mt-4">
+
+    <button class="btn btn-outline-success btn-sm me-2" type="button" onclick="addCircle();">
+      <i class="fa-solid fa-plus-circle"></i>
+      Добавить круг
+    </button>
+
+    <table class="table" id="circles_table">
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal" tabindex="-1" id="modalDialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mt-3">
+            <input type="text" class="form-control" id="inputField">
+            <div class="mt-3 init-player" style="display: none;">
+              <label for="player1" class="form-label">Игрок 1</label>
+              <input type="text" class="form-control" id="player1">
+            </div>
+            <div class="mt-3 init-player" style="display: none;">
+              <label for="player2" class="form-label">Игрок 2</label>
+              <input type="text" class="form-control" id="player2">
+            </div>
+            <input type="text" class="form-control" id="targetObj" style="visibility: hidden; height: 0px;">
+            <input type="text" class="form-control" id="action" style="visibility: hidden; height: 0px;">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary" onclick="submitModal();">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="static/bootstrap/bootstrap.bundle.min.js"></script>
+  <script>
+    const myModal = document.getElementById("modalDialog");
+    myModal.addEventListener('shown.bs.modal', () => {
+      $(myModal).find("input:visible:first").focus();
+    })
+  </script>
+
+</body>
+</html>
