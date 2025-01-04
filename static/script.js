@@ -135,3 +135,15 @@ function renamePlayer() {
     localStorage.setItem('players', JSON.stringify(players));
     location.reload();
 }
+
+function clearTable() {
+    var players = JSON.parse(localStorage.getItem("players"));
+    var circles = []
+    var circle = []
+    for (var p = 0; p < players.length; p++) {
+        circle.push(0)
+    }
+    circles.push(circle)
+    localStorage.setItem('circles', JSON.stringify(circles));
+    location.reload();
+}
