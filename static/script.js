@@ -22,7 +22,7 @@ function loadData() {
     for (var c = 0; c < circles.length; c++) {
         $("#circles_table").prepend(`<tr id='circle_${c}'></tr>`);
         for (var p = 0; p < circles[c].length; p++) {
-            var cell = `<td><span id="${p}_${c}" style="cursor:pointer; width:100%; display:block;" onclick="openModal('Выбил', this.id, 'edit_score');">${circles[c][p]}</span></td>`
+            var cell = `<td id="${p}_${c}" style="cursor:pointer;" onclick="openModal('Выбил', this.id, 'edit_score');">${circles[c][p]}</td>`
             var row_id = `#circle_${c}`
             $(row_id).append(cell);
         }
