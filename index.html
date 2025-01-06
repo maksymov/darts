@@ -1,14 +1,52 @@
 <!DOCTYPE html>
-<html lang="ru" data-bs-theme="dark">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="static/jquery-3.7.0.min.js"></script>
   <script src="static/fontawesome/all.min.js"></script>
-  <script src="static/script.js?v=2025-01-04"></script>
+  <script src="static/script.js?v=2025-01-06"></script>
   <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
-  <link href="static/style.css" rel="stylesheet">
+  <link href="static/style.css?v=2025-01-06" rel="stylesheet">
   <title>Таблица для игры в дартс</title>
+
+  <script>
+    const getStoredTheme = () => localStorage.getItem('theme')
+    const setStoredTheme = theme => localStorage.setItem('theme', theme)
+    const getPreferredTheme = () => {
+        const storedTheme = getStoredTheme()
+        if (storedTheme) {
+            return storedTheme
+        } else {
+            localStorage.setItem('theme', 'auto');
+            return 'auto'
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    const setTheme = theme => {
+        if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        }
+        setStoredTheme(theme);
+    }
+    setTheme(getPreferredTheme());
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        const storedTheme = getStoredTheme()
+        if (storedTheme !== 'light' && storedTheme !== 'dark') {
+            setTheme(getPreferredTheme())
+        }
+    })
+    function setupSwitcher() {
+        const storedTheme = getStoredTheme()
+        if (storedTheme !== null) {
+            const currentRadio = document.querySelector(`.switcher__radio[value=${storedTheme}]`);
+            currentRadio.checked = true;
+        }
+    }
+  </script>
+
 </head>
 
 <body>
@@ -21,25 +59,38 @@
         </button>
         <button class="btn btn-outline-info me-2" type="button" onclick="openModal('Новый игрок', false, 'add_player')">
           <i class="fa-solid fa-user-plus"></i>
-          Добавить игрока
+          <span class="d-none d-md-inline">
+            Добавить игрока
+          </span>
         </button>
         <button class="btn btn-outline-warning me-2" type="button" onclick="clearTable();">
           <i class="fa-solid fa-rotate-right"></i>
-          Сброс
+          <span class="d-none d-md-inline">
+            Сброс
+          </span>
         </button>
+      </div>
+      <div>
+        <fieldset class="switcher">
+          <legend class="switcher__legend">Схема</legend>
+          <input class="switcher__radio switcher__radio--light" type="radio" name="color-scheme" value="light" aria-label="Светлая" onclick="setTheme('light')">
+          <input class="switcher__radio switcher__radio--auto" type="radio" name="color-scheme" value="auto" aria-label="Системная" checked="" onclick="setTheme('auto')">
+          <input class="switcher__radio switcher__radio--dark" type="radio" name="color-scheme" value="dark" aria-label="Тёмная" onclick="setTheme('dark')">
+          <div class="switcher__status"></div>
+        </fieldset>
       </div>
     </div>
   </nav>
 
-  <div class="container text-center mt-4 sticky-top">
-    <div class="row bg-dark" id="players">
-      
+  <div class="sticky-top text-bg-dark">
+    <div class="container text-center pt-4">
+      <div class="row" id="players"></div>
     </div>
   </div>
 
   <div class="container text-center mt-4">
 
-    <button class="btn btn-outline-success btn-sm me-2" type="button" onclick="addCircle();">
+    <button class="btn btn-outline-success btn-sm me-2 mb-2" type="button" onclick="addCircle();">
       <i class="fa-solid fa-plus-circle"></i>
       Добавить круг
     </button>

@@ -1,5 +1,9 @@
+
+
+
 $(document).ready(function () {
     loadData();
+    setupSwitcher();
   })
 
 
@@ -8,7 +12,7 @@ function loadData() {
     for (var i = 0; i < players.length; i++) {
         var name = players[i].name;
         var score = players[i].score;
-        var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><h2><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></h2></div></div>`;
+        var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i> <span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><h2><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></h2></div></div>`;
         $("#players").append(player_html);
         var id=`#player_${i}_score`
         if (score == 0) {
