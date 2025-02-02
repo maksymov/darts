@@ -179,7 +179,8 @@ function deletePlayer(id) {
     var players = JSON.parse(localStorage.getItem("players"));
     players.splice(id, 1);
     localStorage.setItem('players', JSON.stringify(players));
-    location.reload();
+    calculateLeaderGap();
+    setTimeout(function(){location.reload();}, 200);
 }
 
 
@@ -217,7 +218,8 @@ function addPlayer() {
         circles[c].push(0)
     }
     localStorage.setItem('circles', JSON.stringify(circles));
-    location.reload();
+    calculateLeaderGap();
+    setTimeout(function(){location.reload();}, 200);
 }
 
 
