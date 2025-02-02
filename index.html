@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="static/jquery-3.7.0.min.js"></script>
   <script src="static/fontawesome/all.min.js"></script>
-  <script src="static/script.js?v=2025-01-06"></script>
+  <script src="static/script.js?v=2025-02-03"></script>
   <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
   <link href="static/style.css?v=2025-01-06" rel="stylesheet">
   <title>Таблица для игры в дартс</title>
@@ -53,7 +53,7 @@
   <nav class="navbar bg-dark border-bottom border-body navbar-expand-lg" data-bs-theme="dark">
     <div class="container-fluid">
       <div>
-        <button class="btn btn-success me-2" type="button" onclick="openModal('Начальные очки', false, 'new_game')">
+        <button class="btn btn-success me-2" type="button" onclick="newGameDialog();">
           <i class="fa-solid fa-bullseye"></i>
           Новая игра
         </button>
@@ -82,23 +82,30 @@
     </div>
   </nav>
 
-  <div class="sticky-top text-bg-dark">
-    <div class="container text-center pt-4">
-      <div class="row" id="players"></div>
+  <div id="board_501" style="display: none;">
+    <div class="sticky-top text-bg-dark">
+      <div class="container text-center pt-4">
+        <div class="row" id="players"></div>
+      </div>
+    </div>
+
+    <div class="container text-center mt-4">
+      <button class="btn btn-outline-success btn-sm me-2 mb-2" type="button" onclick="addCircle();">
+        <i class="fa-solid fa-plus-circle"></i>
+        Добавить круг
+      </button>
+
+      <table class="table" id="circles_table" style="table-layout: fixed;">
+        <tbody>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="container text-center mt-4">
-
-    <button class="btn btn-outline-success btn-sm me-2 mb-2" type="button" onclick="addCircle();">
-      <i class="fa-solid fa-plus-circle"></i>
-      Добавить круг
-    </button>
-
-    <table class="table" id="circles_table" style="table-layout: fixed;">
-      <tbody>
-      </tbody>
-    </table>
+  <div id="board_sectors" style="display: none;" class="container mt-4">
+    <div class="container text-center pt-4">
+      <div class="row" id="board_sectors_row"></div>
+    </div>
   </div>
 
   <div class="modal" tabindex="-1" id="modalDialog">
@@ -111,16 +118,8 @@
         <div class="modal-body">
           <div class="mt-3">
             <input type="text" class="form-control" id="inputField">
-            <div class="mt-3 init-player" style="display: none;">
-              <label for="player1" class="form-label">Игрок 1</label>
-              <input type="text" class="form-control" id="player1">
-            </div>
-            <div class="mt-3 init-player" style="display: none;">
-              <label for="player2" class="form-label">Игрок 2</label>
-              <input type="text" class="form-control" id="player2">
-            </div>
-            <input type="text" class="form-control" id="targetObj" style="visibility: hidden; height: 0px;">
-            <input type="text" class="form-control" id="action" style="visibility: hidden; height: 0px;">
+            <input type="hidden" class="form-control" id="targetObj">
+            <input type="hidden" class="form-control" id="action">
           </div>
         </div>
         <div class="modal-footer">

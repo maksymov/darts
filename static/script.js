@@ -4,33 +4,91 @@
 $(document).ready(function () {
     loadData();
     setupSwitcher();
-  })
+})
 
+
+const GAMES = {
+    '501': {
+        'title': '501',
+        'desc': "Необходимо набрать ровно 501 очко. Последний ьросок должен быть в удвоение. Если игрок набирает больше того, что у него осталось, последний круг не засчитывается.",
+        'total_score': 501,
+    },
+    'sectors': {
+        'title': 'По секторам',
+        'desc': "Поочерёдно попасть во все сектора",
+    }
+}
 
 function loadData() {
     var players = JSON.parse(localStorage.getItem("players"));
-    for (var i = 0; i < players.length; i++) {
-        var name = players[i].name;
-        var score = players[i].score;
-        var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i> <span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><h2><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></h2></div></div>`;
-        $("#players").append(player_html);
-        var id=`#player_${i}_score`
-        if (score == 0) {
-            $(id).removeClass('text-bg-secondary').addClass('text-bg-success')
-        } else {
-            $(id).addClass('text-bg-secondary').removeClass('text-bg-success')
+    if (players === null || players == '') {
+        localStorage.setItem('players', '[{"name":"Игрок 1","score":0}]')
+    }
+    var game = localStorage.getItem("curr_game")
+    $(`#board_${game}`).show();
+    if (game == '501') {
+        for (var i = 0; i < players.length; i++) {
+            var name = players[i].name;
+            var score = players[i].score;
+            var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i> <span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><div class="btn-group mt-2" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 3rem;"><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></span></div></div>`;
+            $("#players").append(player_html);
+            var id=`#player_${i}_score`
+            if (score == 0) {
+                $(id).removeClass('text-bg-secondary').addClass('text-bg-success')
+            } else {
+                $(id).addClass('text-bg-secondary').removeClass('text-bg-success')
+            }
+        }
+    
+        var circles = JSON.parse(localStorage.getItem("circles"));
+        for (var c = 0; c < circles.length; c++) {
+            $("#circles_table").prepend(`<tr id='circle_${c}'></tr>`);
+            for (var p = 0; p < circles[c].length; p++) {
+                var cell = `<td id="${p}_${c}" style="cursor:pointer;" onclick="openModal('Выбил', this.id, 'edit_score');">${circles[c][p]}</td>`
+                var row_id = `#circle_${c}`
+                $(row_id).append(cell);
+            }
         }
     }
+    if (game == 'sectors') {
+        for (var i = 0; i < players.length; i++) {
+            var name = players[i].name;
+            var score = players[i].score;
+            var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><div class="btn-group mt-2" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 3rem;"><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></span><br><div class="btn-group mt-3" role="group"><button type="button" class="btn btn-outline-secondary" onclick="editPlayerScore(${i}, 'remove')"><i class="fa-solid fa-circle-minus"></i></button><button type="button" class="btn btn-outline-success" onclick="editPlayerScore(${i}, 'add')"><i class="fa-solid fa-circle-plus"></i></button></div></div></div>`;
+            $("#board_sectors_row").append(player_html);
+            var id=`#player_${i}_score`
+            if (score == 0) {
+                $(id).removeClass('text-bg-secondary').addClass('text-bg-success')
+            } else {
+                $(id).addClass('text-bg-secondary').removeClass('text-bg-success')
+            }
+        }
+    }
+}
 
-    var circles = JSON.parse(localStorage.getItem("circles"));
-    for (var c = 0; c < circles.length; c++) {
-        $("#circles_table").prepend(`<tr id='circle_${c}'></tr>`);
-        for (var p = 0; p < circles[c].length; p++) {
-            var cell = `<td id="${p}_${c}" style="cursor:pointer;" onclick="openModal('Выбил', this.id, 'edit_score');">${circles[c][p]}</td>`
-            var row_id = `#circle_${c}`
-            $(row_id).append(cell);
-        }
+
+function newGameDialog() {
+    $("#modalDialog").modal('show');
+    $("#modalDialog .modal-body").empty();
+    $("#modalDialog .modal-body").append('<div class="list-group" id="newGameList"></div>')
+    for (var key in GAMES) {
+        console.log(GAMES[key]['desc'])
+        var btn = `<button type="button" class="list-group-item list-group-item-action" onclick="newGame_${key}();"><h3>${GAMES[key]['title']}</h3>${GAMES[key]['desc']}</button>`
+        $("#newGameList").append(btn);
     }
+}
+
+
+function newGame_501() {
+    localStorage.setItem('curr_game', '501');
+    localStorage.setItem('max_val', 501);
+    clearTable();
+}
+
+
+function newGame_sectors() {
+    localStorage.setItem('curr_game', 'sectors');
+    clearTable();
 }
 
 
@@ -45,12 +103,7 @@ function openModal(modalTitle, id, action) {
     }
     $("#targetObj").val(id);
     $("#action").val(action);
-    if (action == "new_game") {
-        $(".init-player").show();
-    } else {
-        $(".init-player").hide();
-    }
-    if (action == "new_game" || action == 'edit_score') {
+    if (action == 'edit_score') {
         document.getElementById('inputField').type = 'number'
     } else {
         document.getElementById('inputField').type = 'text'
@@ -92,6 +145,38 @@ function submitModal(action) {
     }
 }
 
+function editPlayerScore(player_id, action) {
+    var players = JSON.parse(localStorage.getItem("players"));
+    var score = players[player_id].score
+    if (action == 'add'){
+        score += 1;
+    } else {
+        score -= 1;
+    }
+    players[player_id].score = score;
+    localStorage.setItem('players', JSON.stringify(players));
+    $(`#player_${player_id}_score`).html(score);
+}
+
+
+function deletePlayer(id) {
+    var players = JSON.parse(localStorage.getItem("players"));
+    players.splice(id, 1);
+    localStorage.setItem('players', JSON.stringify(players));
+    location.reload();
+}
+
+
+function movePlayer(old_index, value) {
+    var new_index = old_index + value;
+    var players = JSON.parse(localStorage.getItem("players"));
+    if (new_index >= 0 && new_index < players.length) {
+        players.splice(new_index, 0, players.splice(old_index, 1)[0]);
+        localStorage.setItem('players', JSON.stringify(players));
+        location.reload();
+    }
+}
+
 
 function addCircle() {
     var circles = JSON.parse(localStorage.getItem("circles"));
@@ -105,17 +190,6 @@ function addCircle() {
     location.reload()
 }
 
-function newGame() {
-    var max_val = Number($("#inputField").val());
-    var player1 = $("#player1").val()
-    var player2 = $("#player2").val()
-    var players = `[{"name":"${player1}","score":${max_val}},{"name":"${player2}","score":${max_val}}]`
-    var circles = '[[0,0]]'
-    localStorage.setItem('players', players);
-    localStorage.setItem('circles', circles);
-    localStorage.setItem('max_val', max_val);
-    location.reload()
-}
 
 function addPlayer() {
     var players = JSON.parse(localStorage.getItem("players"));
@@ -130,6 +204,7 @@ function addPlayer() {
     location.reload();
 }
 
+
 function renamePlayer() {
     var target = $("#targetObj").val();
     var new_name = $("#inputField").val();
@@ -140,17 +215,28 @@ function renamePlayer() {
     location.reload();
 }
 
+
 function clearTable() {
-    var players = JSON.parse(localStorage.getItem("players"));
-    var circles = []
-    var circle = []
-    for (var p = 0; p < players.length; p++) {
-        circle.push(0)
-        players[p].score = localStorage.getItem("max_val");
-        $(".text-bg-secondary").removeClass("text-bg-success").addClass("text-bg-secondary")
+    var game = localStorage.getItem("curr_game")
+    if (game == '501') {
+        var players = JSON.parse(localStorage.getItem("players"));
+        var circles = []
+        var circle = []
+        for (var p = 0; p < players.length; p++) {
+            circle.push(0)
+            players[p].score = localStorage.getItem("max_val");
+        }
+        circles.push(circle)
+        localStorage.setItem('circles', JSON.stringify(circles));
+        localStorage.setItem('players', JSON.stringify(players));
+        location.reload();
     }
-    circles.push(circle)
-    localStorage.setItem('circles', JSON.stringify(circles));
-    localStorage.setItem('players', JSON.stringify(players));
-    location.reload();
+    if (game == 'sectors') {
+        var players = JSON.parse(localStorage.getItem("players"));
+        for (var p = 0; p < players.length; p++) {
+            players[p].score = 1;
+        }
+        localStorage.setItem('players', JSON.stringify(players));
+        location.reload();
+    }
 }
