@@ -10,12 +10,12 @@ $(document).ready(function () {
 const GAMES = {
     '501': {
         'title': '501',
-        'desc': "Необходимо набрать ровно 501 очко. Последний ьросок должен быть в удвоение. Если игрок набирает больше того, что у него осталось, последний круг не засчитывается.",
+        'desc': "Необходимо набрать ровно 501 очко. Последний бросок должен быть в удвоение. Если игрок набирает больше того, что у него осталось, последний круг не засчитывается.",
         'total_score': 501,
     },
     'sectors': {
         'title': 'По секторам',
-        'desc': "Поочерёдно попасть во все сектора",
+        'desc': "Поочерёдно попасть в каждый сектор",
     }
 }
 
@@ -30,7 +30,12 @@ function loadData() {
         for (var i = 0; i < players.length; i++) {
             var name = players[i].name;
             var score = players[i].score;
-            var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i> <span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><div class="btn-group mt-2" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 3rem;"><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></span></div></div>`;
+            var leader_gap_txt = "";
+            var leader_gap = players[i].leader_gap;
+            if (leader_gap > 0) {
+                leader_gap_txt = ` (+${leader_gap})`
+            }
+            var player_html = `<div class="col"><div><h1><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><div class="btn-group mt-2" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 3rem;"><span class="badge text-bg-secondary" id="player_${i}_score">${score}${leader_gap_txt}</span></span></div></div>`;
             $("#players").append(player_html);
             var id=`#player_${i}_score`
             if (score == 0) {
@@ -54,7 +59,7 @@ function loadData() {
         for (var i = 0; i < players.length; i++) {
             var name = players[i].name;
             var score = players[i].score;
-            var player_html = `<div class="col"><div><h1><i class="fa-regular fa-circle-user"></i><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><div class="btn-group mt-2" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 3rem;"><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></span><br><div class="btn-group mt-3" role="group"><button type="button" class="btn btn-outline-secondary" onclick="editPlayerScore(${i}, 'remove')"><i class="fa-solid fa-circle-minus"></i></button><button type="button" class="btn btn-outline-success" onclick="editPlayerScore(${i}, 'add')"><i class="fa-solid fa-circle-plus"></i></button></div></div></div>`;
+            var player_html = `<div class="col"><div><h1><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h1><div class="btn-group mt-2" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 3rem;"><span class="badge text-bg-secondary" id="player_${i}_score">${score}</span></span><br><div class="btn-group mt-3" role="group"><button type="button" class="btn btn-outline-secondary" onclick="editPlayerScore(${i}, 'remove')"><i class="fa-solid fa-circle-minus"></i></button><button type="button" class="btn btn-outline-success" onclick="editPlayerScore(${i}, 'add')"><i class="fa-solid fa-circle-plus"></i></button></div></div></div>`;
             $("#board_sectors_row").append(player_html);
             var id=`#player_${i}_score`
             if (score == 0) {
@@ -111,6 +116,16 @@ function openModal(modalTitle, id, action) {
 }
 
 
+function calculateLeaderGap() {
+    var players = JSON.parse(localStorage.getItem("players"));
+    var leader_score = Math.min.apply(Math, players.map(function(o) {return o.score; }));
+    for (var p = 0; p < players.length; p++) {
+        players[p].leader_gap = players[p].score - leader_score;
+    }
+    localStorage.setItem('players', JSON.stringify(players));
+}
+
+
 function submitModal(action) {
     var action = $("#action").val();
     if (action == 'edit_score') {
@@ -132,7 +147,8 @@ function submitModal(action) {
         }
         players[player].score = score;
         localStorage.setItem('players', JSON.stringify(players));
-        location.reload();
+        calculateLeaderGap();
+        setTimeout(function(){location.reload();}, 200);
     }
     if (action == 'new_game') {
         newGame();
@@ -225,6 +241,7 @@ function clearTable() {
         for (var p = 0; p < players.length; p++) {
             circle.push(0)
             players[p].score = localStorage.getItem("max_val");
+            players[p].leader_gap = 0;
         }
         circles.push(circle)
         localStorage.setItem('circles', JSON.stringify(circles));
