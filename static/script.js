@@ -179,6 +179,14 @@ function deletePlayer(id) {
     var players = JSON.parse(localStorage.getItem("players"));
     players.splice(id, 1);
     localStorage.setItem('players', JSON.stringify(players));
+    var game = localStorage.getItem("curr_game")
+    if (game == '501') {
+        var circles = JSON.parse(localStorage.getItem("circles"));
+        for (var c = 0; c < circles.length; c++) {
+            circles[c].splice(id, 1);
+        }
+        localStorage.setItem('circles', JSON.stringify(circles));
+    }
     calculateLeaderGap();
     setTimeout(function(){location.reload();}, 200);
 }
@@ -190,7 +198,15 @@ function movePlayer(old_index, value) {
     if (new_index >= 0 && new_index < players.length) {
         players.splice(new_index, 0, players.splice(old_index, 1)[0]);
         localStorage.setItem('players', JSON.stringify(players));
-        location.reload();
+        var game = localStorage.getItem("curr_game")
+        if (game == '501') {
+            var circles = JSON.parse(localStorage.getItem("circles"));
+            for (var c = 0; c < circles.length; c++) {
+                circles[c].splice(new_index, 0, circles[c].splice(old_index, 1)[0]);
+            }
+            localStorage.setItem('circles', JSON.stringify(circles));
+        }
+        setTimeout(function(){location.reload();}, 200);
     }
 }
 
