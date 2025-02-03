@@ -144,7 +144,7 @@ function submitModal(action) {
         circles[circle][player] = Number(val);
         localStorage.setItem('circles', JSON.stringify(circles));
         var players = JSON.parse(localStorage.getItem("players"));
-        var score = localStorage.getItem("total_score")
+        var score = Number(localStorage.getItem("total_score"))
         for (var c = 0; c < circles.length; c++) {
             if (score >= circles[c][player]) {
                 score = score - circles[c][player]
@@ -168,7 +168,7 @@ function submitModal(action) {
 
 function editTotalScore() {
     var new_total_score = $("#inputField").val();
-    var old_total_score = localStorage.getItem("total_score");
+    var old_total_score = Number(localStorage.getItem("total_score"));
     var diff = new_total_score - old_total_score;
     var players = JSON.parse(localStorage.getItem("players"));
     for (var p = 0; p < players.length; p++) {
@@ -245,7 +245,7 @@ function addCircle() {
 function addPlayer() {
     var players = JSON.parse(localStorage.getItem("players"));
     var name = $("#inputField").val()
-    players.push({"name":name,"score":localStorage.getItem("total_score")})
+    players.push({"name":name,"score":Number(localStorage.getItem("total_score"))})
     localStorage.setItem('players', JSON.stringify(players));
     var circles = JSON.parse(localStorage.getItem("circles"));
     for (var c = 0; c < circles.length; c++) {
@@ -276,7 +276,7 @@ function clearTable() {
         var circle = []
         for (var p = 0; p < players.length; p++) {
             circle.push(0)
-            players[p].score = localStorage.getItem("total_score");
+            players[p].score = Number(localStorage.getItem("total_score"));
             players[p].leader_gap = 0;
         }
         circles.push(circle)
