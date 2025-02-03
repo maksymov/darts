@@ -9,8 +9,8 @@ $(document).ready(function () {
 
 const GAMES = {
     '501': {
-        'title': '501',
-        'desc': "Необходимо набрать ровно 501 очко. Последний бросок должен быть в удвоение. Если игрок набирает больше того, что у него осталось, последний круг не засчитывается.",
+        'title': 'Сброс очков',
+        'desc': "Необходимо сбросить 501 или другое выбранное количество очков. Последний бросок должен быть в удвоение. Если игрок набирает больше того, что у него осталось, последний круг не засчитывается.",
         'total_score': 501,
     },
     'sectors': {
@@ -43,6 +43,11 @@ function loadData() {
             } else {
                 $(id).addClass('text-bg-secondary').removeClass('text-bg-success')
             }
+            var total_score = localStorage.getItem('total_score')
+            if (total_score === null) {
+                total_score = GAMES['501']['total_score'];
+            }
+            $("#501_score").html(total_score);
         }
     
         var circles = JSON.parse(localStorage.getItem("circles"));
@@ -86,7 +91,7 @@ function newGameDialog() {
 
 function newGame_501() {
     localStorage.setItem('curr_game', '501');
-    localStorage.setItem('max_val', 501);
+    localStorage.setItem('total_score', GAMES['501']['total_score']);
     clearTable();
 }
 
@@ -108,7 +113,7 @@ function openModal(modalTitle, id, action) {
     }
     $("#targetObj").val(id);
     $("#action").val(action);
-    if (action == 'edit_score') {
+    if (action == 'edit_score' || action == 'edit_total_score') {
         document.getElementById('inputField').type = 'number'
     } else {
         document.getElementById('inputField').type = 'text'
@@ -139,7 +144,7 @@ function submitModal(action) {
         circles[circle][player] = Number(val);
         localStorage.setItem('circles', JSON.stringify(circles));
         var players = JSON.parse(localStorage.getItem("players"));
-        var score = localStorage.getItem("max_val")
+        var score = localStorage.getItem("total_score")
         for (var c = 0; c < circles.length; c++) {
             if (score >= circles[c][player]) {
                 score = score - circles[c][player]
@@ -150,15 +155,28 @@ function submitModal(action) {
         calculateLeaderGap();
         setTimeout(function(){location.reload();}, 200);
     }
-    if (action == 'new_game') {
-        newGame();
-    }
     if (action == 'add_player') {
         addPlayer();
     }
     if (action == 'rename_player') {
         renamePlayer();
     }
+    if (action == 'edit_total_score') {
+        editTotalScore();
+    }
+}
+
+function editTotalScore() {
+    var new_total_score = $("#inputField").val();
+    var old_total_score = localStorage.getItem("total_score");
+    var diff = new_total_score - old_total_score;
+    var players = JSON.parse(localStorage.getItem("players"));
+    for (var p = 0; p < players.length; p++) {
+        players[p].score += diff
+    }
+    localStorage.setItem('players', JSON.stringify(players));
+    localStorage.setItem('total_score', new_total_score);
+    setTimeout(function(){location.reload();}, 200);
 }
 
 function editPlayerScore(player_id, action) {
@@ -227,7 +245,7 @@ function addCircle() {
 function addPlayer() {
     var players = JSON.parse(localStorage.getItem("players"));
     var name = $("#inputField").val()
-    players.push({"name":name,"score":localStorage.getItem("max_val")})
+    players.push({"name":name,"score":localStorage.getItem("total_score")})
     localStorage.setItem('players', JSON.stringify(players));
     var circles = JSON.parse(localStorage.getItem("circles"));
     for (var c = 0; c < circles.length; c++) {
@@ -258,7 +276,7 @@ function clearTable() {
         var circle = []
         for (var p = 0; p < players.length; p++) {
             circle.push(0)
-            players[p].score = localStorage.getItem("max_val");
+            players[p].score = localStorage.getItem("total_score");
             players[p].leader_gap = 0;
         }
         circles.push(circle)
