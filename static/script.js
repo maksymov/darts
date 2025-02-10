@@ -158,7 +158,7 @@ function submitModal() {
         players[player].score = score;
         localStorage.setItem('players', JSON.stringify(players));
         calculateLeaderGap();
-        if (Number(player)+1 == players.length) {
+        if (Number(player)+1 == players.length && Number(circle)+1 == circles.length) {
             addCircle();
         }
         setTimeout(function(){location.reload();}, 200);
