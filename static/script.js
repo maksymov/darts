@@ -4,6 +4,11 @@
 $(document).ready(function () {
     loadData();
     setupSwitcher();
+    $('#inputField').on('keydown', function(e) {
+        if (e.which === 13) {
+            submitModal();
+        }
+    })
 })
 
 
@@ -131,7 +136,7 @@ function calculateLeaderGap() {
 }
 
 
-function submitModal(action) {
+function submitModal() {
     var action = $("#action").val();
     if (action == 'edit_score') {
         var target = $("#targetObj").val();
@@ -153,6 +158,9 @@ function submitModal(action) {
         players[player].score = score;
         localStorage.setItem('players', JSON.stringify(players));
         calculateLeaderGap();
+        if (Number(player)+1 == players.length) {
+            addCircle();
+        }
         setTimeout(function(){location.reload();}, 200);
     }
     if (action == 'add_player') {
