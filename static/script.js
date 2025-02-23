@@ -202,19 +202,19 @@ function editPlayerScore(player_id, action) {
 
 
 function deletePlayer(id) {
-    var players = JSON.parse(localStorage.getItem("players"));
-    players.splice(id, 1);
-    localStorage.setItem('players', JSON.stringify(players));
-    var game = localStorage.getItem("curr_game")
-    if (game == '501') {
+    if (confirm('Вы уверены, что хотите удалить игрока?')) {
+        var players = JSON.parse(localStorage.getItem("players"));
+        players.splice(id, 1);
+        localStorage.setItem('players', JSON.stringify(players));
         var circles = JSON.parse(localStorage.getItem("circles"));
         for (var c = 0; c < circles.length; c++) {
             circles[c].splice(id, 1);
         }
         localStorage.setItem('circles', JSON.stringify(circles));
+        setTimeout(function(){location.reload();}, 200);
+    } else {
+        return false;
     }
-    calculateLeaderGap();
-    setTimeout(function(){location.reload();}, 200);
 }
 
 
