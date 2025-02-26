@@ -38,12 +38,12 @@ function loadData() {
             var leader_gap_txt = "";
             var leader_gap = players[i].leader_gap;
             if (leader_gap > 0) {
-                leader_gap_txt = ` (+${leader_gap})`
+                leader_gap_txt = ` +${leader_gap}`
             }
-            var player_html = `<div class="col"><div><h2><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h2><div class="btn-group btn-group-sm" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 2.5rem;"><span class="badge text-bg-secondary mb-4 mt-2" id="player_${i}_score">${score}${leader_gap_txt}</span></span><br><span style="font-size: 1.5rem;"><span class="badge text-bg-danger mb-4 mt-2" id="player_${i}_leader_gap">${leader_gap_txt}</span></span></div></div>`;
+            var player_html = `<div class="col"><div><h2><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h2><div class="btn-group btn-group-sm" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 2.5rem;"><span class="badge text-bg-secondary mt-2" id="player_${i}_score">${score}</span></span><br><span style="font-size: 1.5rem;"><span class="text-danger" mb-4 mt-2" id="player_${i}_leader_gap">${leader_gap_txt}</span></span></div></div>`;
             $("#players").append(player_html);
             var id=`#player_${i}_score`
-            if (score == 0) {
+            if (score == 0 || leader_gap_txt == "") {
                 $(id).removeClass('text-bg-secondary').addClass('text-bg-success')
             } else {
                 $(id).addClass('text-bg-secondary').removeClass('text-bg-success')
@@ -222,6 +222,7 @@ function deletePlayer(id) {
         for (var c = 0; c < circles.length; c++) {
             circles[c].splice(id, 1);
         }
+        calculateLeaderGap();
         localStorage.setItem('circles', JSON.stringify(circles));
         setTimeout(function(){location.reload();}, 200);
     } else {
