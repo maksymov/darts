@@ -40,7 +40,7 @@ function loadData() {
             if (leader_gap > 0) {
                 leader_gap_txt = ` (+${leader_gap})`
             }
-            var player_html = `<div class="col"><div><h2><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h2><div class="btn-group btn-group-sm" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 2.5rem;"><span class="badge text-bg-secondary mb-4 mt-2" id="player_${i}_score">${score}${leader_gap_txt}</span></span></div></div>`;
+            var player_html = `<div class="col"><div><h2><span style="cursor:pointer;" id="player_${i}_name" onclick="openModal('Переименовать игрока', this.id, 'rename_player');">${name}</span></h2><div class="btn-group btn-group-sm" role="group"><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, -1)"><i class="fa-solid fa-circle-chevron-left"></i></button><button type="button" class="btn btn-outline-secondary" onclick="deletePlayer(${i})"><i class="fa-regular fa-trash-can"></i></button><button type="button" class="btn btn-outline-secondary" onclick="movePlayer(${i}, +1)"><i class="fa-solid fa-circle-chevron-right"></i></button></div><br><span style="font-size: 2.5rem;"><span class="badge text-bg-secondary mb-4 mt-2" id="player_${i}_score">${score}${leader_gap_txt}</span></span><br><span style="font-size: 1.5rem;"><span class="badge text-bg-danger mb-4 mt-2" id="player_${i}_leader_gap">${leader_gap_txt}</span></span></div></div>`;
             $("#players").append(player_html);
             var id=`#player_${i}_score`
             if (score == 0) {
@@ -191,9 +191,21 @@ function editPlayerScore(player_id, action) {
     var players = JSON.parse(localStorage.getItem("players"));
     var score = players[player_id].score
     if (action == 'add'){
-        score += 1;
+        if (score == 20) {
+            score += 5;
+        } else if (score == 25) {
+            score += 25;
+        } else {
+            score += 1;
+        }
     } else {
-        score -= 1;
+        if (score == 50) {
+            score -= 25;
+        } else if (score == 25) {
+            score -= 5;
+        } else {
+            score -= 1;
+        }
     }
     players[player_id].score = score;
     localStorage.setItem('players', JSON.stringify(players));
