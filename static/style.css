@@ -1,3 +1,12 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 #circles_table td:hover {
     background-color: rgba(0,0,0,.075);
 }

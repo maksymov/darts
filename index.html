@@ -7,8 +7,8 @@
   <script src="static/fontawesome/all.min.js"></script>
   <script src="static/script.js?v=2025-02-26_12:44"></script>
   <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
-  <link href="static/style.css?v=2025-01-06" rel="stylesheet">
-  <title>Таблица для игры в дартс</title>
+  <link href="static/style.css?v=2025-02-27" rel="stylesheet">
+  <title>Онлайн-таблица для игры в дартс</title>
 
   <script>
     const getStoredTheme = () => localStorage.getItem('theme')
@@ -125,6 +125,36 @@
       <div class="row" id="board_sectors_row"></div>
     </div>
   </div>
+
+  <footer class="footer mt-auto py-3 bg-dark text-white">
+    <div class="container text-center">
+      <div class="row">
+        <div class="col-12 col-sm-6">
+          <div class="box">
+            <img src="/static/img/avatar.jpg" alt="Avatar" class="rounded-circle me-2" width="50" height="50" style="vertical-align: top;">
+            <div style="display: inline-block; vertical-align: top; text-align: left;">
+              Владислав Максимов <br>
+              <a href="https://github.com/maksymov/darts" class="text-white" style="text-decoration: none;">
+                <i class="fa-brands fa-github me-2"></i>
+              </a>
+              <a href="https://vk.com/maksymov.vlad" class="text-white" style="text-decoration: none;">
+                <i class="me-2 fa-brands fa-vk"></i>
+              </a>
+              <a href="https://t.me/MaKcuMoB" class="text-white" style="text-decoration: none;">
+                <i class="me-2 fa-brands fa-telegram"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-6">
+          <a href="https://yoomoney.ru/to/410011276146968" class="btn btn-dark btn-lg" target="_blank">
+            На пивас
+            <i class="fa-solid fa-beer-mug-empty"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
 
   <div class="modal" tabindex="-1" id="modalDialog">
     <div class="modal-dialog">
