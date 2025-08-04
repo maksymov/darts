@@ -1,4 +1,5 @@
 {
+  "id": "darts-online",
   "name": "Дартс онлайн",
   "short_name": "Дартс",
   "start_url": "/",
@@ -6,6 +7,18 @@
   "background_color": "#1a1a1a",
   "theme_color": "#222",
   "description": "Удобный онлайн-калькулятор для подсчёта очков в дартс",
+  "screenshots": [
+    {
+      "src": "/static/img/Screenshot_1.png",
+      "sizes": "1080x608",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/Screenshot_2.png",
+      "sizes": "600x600",
+      "type": "image/png"
+    }
+  ],
   "icons": [
     {
       "src": "/static/img/icon-192x192.png",
