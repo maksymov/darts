@@ -219,7 +219,7 @@
   </script>
 
   <script src="static/sw.js"></script>
-  <script  type="module">
+  <script type="module">
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/static/sw.js')
         .then(reg => console.log('Service Worker зарегистрирован'))
