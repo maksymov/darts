@@ -365,6 +365,5 @@ function clearTable() {
     $("#board_sectors_row").empty();
     $("#board_501").hide();
     $("#board_sectors").hide();
-    $('#modalDialog').modal('toggle'); 
     setTimeout(function(){loadData();}, 200);
 }
