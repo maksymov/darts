@@ -8,9 +8,25 @@
   <script src="static/script.js?v=2025-02-26_12:44"></script>
   <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
   <link href="static/style.css?v=2025-02-27" rel="stylesheet">
-  <title>Онлайн-таблица для игры в дартс</title>
-  <meta name="keywords" content="приложение для дартс, таблица дартс, онлайн подсчёт очков в дартс" />
-  <meta name="description" content="Приложение для дартса. Удобная онлайн-таблица для подсчёта очков в дартс. Есть несколько режимов игры, неограниченное количество игроков, редактирование внесённых данных, добавление и удаление игроков в процессе игры, изменение порядка игроков и другие плюшки. Всё бесплатно и без регистрации. Играйте с удовольствием!"/>
+  <title>Дартс онлайн</title>
+  <meta name="description" content="Дартс онлайн — удобный калькулятор очков для игры в дартс с возможностью добавления игроков, редактирования данных и нескольких режимов игры. Играйте без регистрации!">
+  <meta name="keywords" content="дартс онлайн, подсчёт очков дартс, дартс калькулятор, игра в дартс, онлайн таблица дартс">
+  <meta name="author" content="Дартс онлайн">
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Дартс онлайн",
+    "description": "Онлайн-калькулятор для подсчёта очков в дартс. Играйте с друзьями без регистрации.",
+    "url": "https://дартс-онлайн.рф",
+    "applicationCategory": "Game",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "RUB"
+    }
+  }
+</script>
 
   <script>
     const getStoredTheme = () => localStorage.getItem('theme')
@@ -63,7 +79,11 @@
           accurateTrackBounce:true
     });
   </script>
-  <noscript><div><img src="https://mc.yandex.ru/watch/100045365" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+  
+  <noscript>
+    <div><img src="https://mc.yandex.ru/watch/100045365" style="position:absolute; left:-9999px;" alt="" /></div>
+    <p>Для полной функциональности сайта включите JavaScript.</p>
+  </noscript>
 <!-- /Yandex.Metrika counter -->
 
 </head>
@@ -130,6 +150,9 @@
 
   <footer class="footer mt-auto py-3 bg-dark text-white">
     <div class="container text-center">
+      <main>
+        <p style="opacity: 0.5;">Используйте наш сайт для удобного подсчёта очков в дартс. Выберите режим игры, добавьте игроков и отслеживайте результаты в реальном времени.</p>
+      </main>
       <div class="row">
         <div class="col-12 col-sm-6 col-md-3 d-none d-md-block">
           <img src="/static/img/write.png" alt="" style="width: 100%; opacity: 0.6;">
@@ -152,7 +175,7 @@
           </a>
         </div>
         <div class="col-12 col-sm-6 col-md-3 d-none d-md-block">
-          <img src="/static/img/donate.png" alt="" style="width: 100%; opacity: 0.6;">
+          <img src="/static/img/donate.png" alt="Пожертвование на развитие проекта" style="width: 100%; opacity: 0.6;">
         </div>
       </div>
     </div>
@@ -183,7 +206,7 @@
     </div>
   </div>
 
-  <script src="static/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="static/bootstrap/bootstrap.bundle.min.js" defer></script>
   <script>
     const myModal = document.getElementById("modalDialog");
     myModal.addEventListener('shown.bs.modal', () => {
