@@ -185,7 +185,10 @@ function submitModal() {
         if (Number(player)+1 == players.length && Number(circle)+1 == circles.length) {
             addCircle();
         }
-        setTimeout(function(){location.reload();}, 200);
+        $("#players").empty();
+        $("#circles_table").empty();
+        $('#modalDialog').modal('toggle'); 
+        setTimeout(function(){loadData();}, 200);
     }
     if (action == 'add_player') {
         addPlayer();
@@ -208,7 +211,10 @@ function editTotalScore() {
     }
     localStorage.setItem('players', JSON.stringify(players));
     localStorage.setItem('total_score', new_total_score);
-    setTimeout(function(){location.reload();}, 200);
+    $("#players").empty();
+    $("#circles_table").empty();
+    $('#modalDialog').modal('toggle'); 
+    setTimeout(function(){loadData();}, 200);
 }
 
 function editPlayerScore(player_id, action) {
@@ -249,7 +255,10 @@ function deletePlayer(id) {
         }
         calculateLeaderGap();
         localStorage.setItem('circles', JSON.stringify(circles));
-        setTimeout(function(){location.reload();}, 200);
+        $("#players").empty();
+        $("#circles_table").empty();
+        $('#modalDialog').modal('toggle'); 
+        setTimeout(function(){loadData();}, 200);
     } else {
         return false;
     }
@@ -270,7 +279,10 @@ function movePlayer(old_index, value) {
             }
             localStorage.setItem('circles', JSON.stringify(circles));
         }
-        setTimeout(function(){location.reload();}, 200);
+        $("#players").empty();
+        $("#circles_table").empty();
+        $('#modalDialog').modal('toggle'); 
+        setTimeout(function(){loadData();}, 200);
     }
 }
 
@@ -284,7 +296,10 @@ function addCircle() {
     }
     circles.push(new_circle)
     localStorage.setItem('circles', JSON.stringify(circles));
-    location.reload()
+    $("#players").empty();
+    $("#circles_table").empty();
+    $('#modalDialog').modal('toggle'); 
+    setTimeout(function(){loadData();}, 200);
 }
 
 
@@ -299,7 +314,10 @@ function addPlayer() {
     }
     localStorage.setItem('circles', JSON.stringify(circles));
     calculateLeaderGap();
-    setTimeout(function(){location.reload();}, 200);
+    $("#players").empty();
+    $("#circles_table").empty();
+    $('#modalDialog').modal('toggle'); 
+    setTimeout(function(){loadData();}, 200);
 }
 
 
@@ -310,7 +328,10 @@ function renamePlayer() {
     var players = JSON.parse(localStorage.getItem("players"));
     players[player].name = new_name;
     localStorage.setItem('players', JSON.stringify(players));
-    location.reload();
+    $("#players").empty();
+    $("#circles_table").empty();
+    $('#modalDialog').modal('toggle'); 
+    setTimeout(function(){loadData();}, 200);
 }
 
 
@@ -337,6 +358,9 @@ function clearTable() {
         }
         localStorage.setItem('max_score', 1);
         localStorage.setItem('players', JSON.stringify(players));
-        location.reload();
+        $("#players").empty();
+        $("#circles_table").empty();
+        $('#modalDialog').modal('toggle'); 
+        setTimeout(function(){loadData();}, 200);
     }
 }
