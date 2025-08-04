@@ -257,7 +257,8 @@ function deletePlayer(id) {
         localStorage.setItem('circles', JSON.stringify(circles));
         $("#players").empty();
         $("#circles_table").empty();
-        $('#modalDialog').modal('toggle'); 
+        $("#board_sectors_row").empty();
+        $('#modalDialog').modal('toggle');
         setTimeout(function(){loadData();}, 200);
     } else {
         return false;
@@ -281,7 +282,7 @@ function movePlayer(old_index, value) {
         }
         $("#players").empty();
         $("#circles_table").empty();
-        $('#modalDialog').modal('toggle'); 
+        $("#board_sectors_row").empty();
         setTimeout(function(){loadData();}, 200);
     }
 }
@@ -298,7 +299,6 @@ function addCircle() {
     localStorage.setItem('circles', JSON.stringify(circles));
     $("#players").empty();
     $("#circles_table").empty();
-    $('#modalDialog').modal('toggle'); 
     setTimeout(function(){loadData();}, 200);
 }
 
@@ -316,6 +316,7 @@ function addPlayer() {
     calculateLeaderGap();
     $("#players").empty();
     $("#circles_table").empty();
+    $("#board_sectors_row").empty();
     $('#modalDialog').modal('toggle'); 
     setTimeout(function(){loadData();}, 200);
 }
@@ -330,6 +331,7 @@ function renamePlayer() {
     localStorage.setItem('players', JSON.stringify(players));
     $("#players").empty();
     $("#circles_table").empty();
+    $("#board_sectors_row").empty();
     $('#modalDialog').modal('toggle'); 
     setTimeout(function(){loadData();}, 200);
 }
@@ -349,7 +351,6 @@ function clearTable() {
         circles.push(circle)
         localStorage.setItem('circles', JSON.stringify(circles));
         localStorage.setItem('players', JSON.stringify(players));
-        location.reload();
     }
     if (game == 'sectors') {
         var players = JSON.parse(localStorage.getItem("players"));
@@ -358,9 +359,12 @@ function clearTable() {
         }
         localStorage.setItem('max_score', 1);
         localStorage.setItem('players', JSON.stringify(players));
-        $("#players").empty();
-        $("#circles_table").empty();
-        $('#modalDialog').modal('toggle'); 
-        setTimeout(function(){loadData();}, 200);
     }
+    $("#players").empty();
+    $("#circles_table").empty();
+    $("#board_sectors_row").empty();
+    $("#board_501").hide();
+    $("#board_sectors").hide();
+    $('#modalDialog').modal('toggle'); 
+    setTimeout(function(){loadData();}, 200);
 }
