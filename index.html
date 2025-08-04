@@ -8,6 +8,10 @@
   <script src="static/script.js?v=2025-02-26_12:44"></script>
   <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
   <link href="static/style.css?v=2025-02-27" rel="stylesheet">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Дартс онлайн">
+  <meta name="theme-color" content="#222">
   <title>Дартс онлайн</title>
   <meta name="description" content="Дартс онлайн — удобный калькулятор очков для игры в дартс с возможностью добавления игроков, редактирования данных и нескольких режимов игры. Играйте без регистрации!">
   <meta name="keywords" content="дартс онлайн, подсчёт очков дартс, дартс калькулятор, игра в дартс, онлайн таблица дартс">
@@ -79,7 +83,7 @@
           accurateTrackBounce:true
     });
   </script>
-  
+
   <noscript>
     <div><img src="https://mc.yandex.ru/watch/100045365" style="position:absolute; left:-9999px;" alt="" /></div>
     <p>Для полной функциональности сайта включите JavaScript.</p>
@@ -212,6 +216,15 @@
     myModal.addEventListener('shown.bs.modal', () => {
       $(myModal).find("input:visible:first").focus();
     })
+  </script>
+
+  <script src="static/sw.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/sw.js')
+        .then(reg => console.log('Service Worker зарегистрирован'))
+        .catch(err => console.error('Ошибка регистрации Service Worker:', err));
+    }
   </script>
 
 </body>
