@@ -187,7 +187,7 @@ function submitModal() {
         }
         $("#players").empty();
         $("#circles_table").empty();
-        $('#modalDialog').modal('toggle'); 
+        $('#modalDialog').modal('hide'); 
         setTimeout(function(){loadData();}, 200);
     }
     if (action == 'add_player') {
@@ -213,7 +213,7 @@ function editTotalScore() {
     localStorage.setItem('total_score', new_total_score);
     $("#players").empty();
     $("#circles_table").empty();
-    $('#modalDialog').modal('toggle'); 
+    $('#modalDialog').modal('hide'); 
     setTimeout(function(){loadData();}, 200);
 }
 
@@ -258,7 +258,6 @@ function deletePlayer(id) {
         $("#players").empty();
         $("#circles_table").empty();
         $("#board_sectors_row").empty();
-        $('#modalDialog').modal('toggle');
         setTimeout(function(){loadData();}, 200);
     } else {
         return false;
@@ -317,7 +316,7 @@ function addPlayer() {
     $("#players").empty();
     $("#circles_table").empty();
     $("#board_sectors_row").empty();
-    $('#modalDialog').modal('toggle'); 
+    $('#modalDialog').modal('hide'); 
     setTimeout(function(){loadData();}, 200);
 }
 
@@ -332,7 +331,7 @@ function renamePlayer() {
     $("#players").empty();
     $("#circles_table").empty();
     $("#board_sectors_row").empty();
-    $('#modalDialog').modal('toggle'); 
+    $('#modalDialog').modal('hide');
     setTimeout(function(){loadData();}, 200);
 }
 
@@ -365,5 +364,6 @@ function clearTable() {
     $("#board_sectors_row").empty();
     $("#board_501").hide();
     $("#board_sectors").hide();
+    $('#modalDialog').modal('hide');
     setTimeout(function(){loadData();}, 200);
 }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="static/jquery-3.7.0.min.js"></script>
   <script src="static/fontawesome/all.min.js"></script>
-  <script src="static/script.js?v=2025-08-04"></script>
+  <script src="static/script.js"></script>
   <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
   <link href="static/style.css" rel="stylesheet">
   <link rel="manifest" href="/static/manifest.json">
@@ -220,7 +220,7 @@
 
   <script type="module">
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/static/sw.js')
+      navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('Service Worker зарегистрирован'))
         .catch(err => console.error('Ошибка регистрации Service Worker:', err));
     }
