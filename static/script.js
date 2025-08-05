@@ -85,10 +85,11 @@ function loadData() {
 
 function newGameDialog() {
     $("#modalDialog").modal('show');
-    $("#modalDialog .modal-body").empty();
+    $("#modalDialog #modalInputs").hide();
+    $("#modalDialog .modal-title").hide();
+    $("#modalDialog .modal-footer").hide();
     $("#modalDialog .modal-body").append('<div class="list-group" id="newGameList"></div>')
     for (var key in GAMES) {
-        console.log(GAMES[key]['desc'])
         var btn = `<button type="button" class="list-group-item list-group-item-action" onclick="newGame_${key}();"><h3>${GAMES[key]['title']}</h3>${GAMES[key]['desc']}</button>`
         $("#newGameList").append(btn);
     }
@@ -109,6 +110,10 @@ function newGame_sectors() {
 
 
 function openModal(modalTitle, id, action) {
+    $("#newGameList").remove();
+    $("#modalDialog #modalInputs").show();
+    $("#modalDialog .modal-title").show();
+    $("#modalDialog .modal-footer").show();
     $("#modalDialog").modal('show');
     $(".modal-title").html(modalTitle);
     var val = $("#"+id).html();
@@ -305,7 +310,13 @@ function addCircle() {
 function addPlayer() {
     var players = JSON.parse(localStorage.getItem("players"));
     var name = $("#inputField").val()
-    players.push({"name":name,"score":Number(localStorage.getItem("total_score"))})
+    if (localStorage.getItem("curr_game") == "501") {
+        var init_score = Number(localStorage.getItem("total_score"))
+    }
+    if (localStorage.getItem("curr_game") == "sectors") {
+        var init_score = 1;
+    }
+    players.push({"name":name,"score":init_score})
     localStorage.setItem('players', JSON.stringify(players));
     var circles = JSON.parse(localStorage.getItem("circles"));
     for (var c = 0; c < circles.length; c++) {
