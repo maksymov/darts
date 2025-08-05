@@ -378,3 +378,24 @@ function clearTable() {
     $('#modalDialog').modal('hide');
     setTimeout(function(){loadData();}, 200);
 }
+
+function checkForSWUpdate() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed') {
+            if (confirm('Доступно обновление. Перезагрузить страницу?')) {
+              navigator.serviceWorker.controller?.postMessage({ type: 'skipWaiting' });
+              window.location.reload();
+            }
+          }
+        });
+      });
+    });
+  }
+}
+
+// Проверка обновления при загрузке
+checkForSWUpdate();
