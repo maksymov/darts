@@ -193,7 +193,7 @@ function submitModal() {
         $("#players").empty();
         $("#circles_table").empty();
         $('#modalDialog').modal('hide'); 
-        setTimeout(function(){loadData();}, 200);
+        loadData();
     }
     if (action == 'add_player') {
         addPlayer();
@@ -219,7 +219,7 @@ function editTotalScore() {
     $("#players").empty();
     $("#circles_table").empty();
     $('#modalDialog').modal('hide'); 
-    setTimeout(function(){loadData();}, 200);
+    loadData();
 }
 
 function editPlayerScore(player_id, action) {
@@ -263,7 +263,7 @@ function deletePlayer(id) {
         $("#players").empty();
         $("#circles_table").empty();
         $("#board_sectors_row").empty();
-        setTimeout(function(){loadData();}, 200);
+        loadData();
     } else {
         return false;
     }
@@ -287,7 +287,7 @@ function movePlayer(old_index, value) {
         $("#players").empty();
         $("#circles_table").empty();
         $("#board_sectors_row").empty();
-        setTimeout(function(){loadData();}, 200);
+        loadData();
     }
 }
 
@@ -303,7 +303,7 @@ function addCircle() {
     localStorage.setItem('circles', JSON.stringify(circles));
     $("#players").empty();
     $("#circles_table").empty();
-    setTimeout(function(){loadData();}, 200);
+    loadData();
 }
 
 
@@ -328,7 +328,7 @@ function addPlayer() {
     $("#circles_table").empty();
     $("#board_sectors_row").empty();
     $('#modalDialog').modal('hide'); 
-    setTimeout(function(){loadData();}, 200);
+    loadData();
 }
 
 
@@ -343,7 +343,7 @@ function renamePlayer() {
     $("#circles_table").empty();
     $("#board_sectors_row").empty();
     $('#modalDialog').modal('hide');
-    setTimeout(function(){loadData();}, 200);
+    loadData();
 }
 
 
@@ -376,7 +376,7 @@ function clearTable() {
     $("#board_501").hide();
     $("#board_sectors").hide();
     $('#modalDialog').modal('hide');
-    setTimeout(function(){loadData();}, 200);
+    loadData();
 }
 
 function checkForSWUpdate() {
