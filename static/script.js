@@ -9,6 +9,22 @@ $(document).ready(function () {
             submitModal();
         }
     })
+    $(document).on('focus', '.player-circle-score', function () {
+        if ($(this).val() === '0') {
+            $(this).val('');
+        }
+    }).on('blur', function () {
+        if ($(this).val() === '') {
+            $(this).val('0');
+        }
+    });
+    $(document).on('keydown change', '.player-circle-score', function(e) {
+        if (e.type === 'keydown' && e.which !== 13) return;
+        var value = $(this).val();
+        if (!isNaN(value) && value !== '') { // Проверка: значение — число и не пустое
+            editScore(this.id);
+        }
+    });
 })
 
 
@@ -25,6 +41,12 @@ const GAMES = {
 }
 
 function loadData() {
+    $("#players").empty();
+    $("#circles_table").empty();
+    $("#board_sectors_row").empty();
+    $("#board_501").hide();
+    $("#board_sectors").hide();
+    $('#modalDialog').modal('hide');
     var players = JSON.parse(localStorage.getItem("players"));
     if (players === null || players == '') {
         localStorage.setItem('players', '[{"name":"Игрок 1","score":0}]')
@@ -59,7 +81,7 @@ function loadData() {
         for (var c = 0; c < circles.length; c++) {
             $("#circles_table").prepend(`<tr id='circle_${c}'></tr>`);
             for (var p = 0; p < circles[c].length; p++) {
-                var cell = `<td id="${p}_${c}" style="cursor:pointer;" onclick="openModal('Выбил', this.id, 'edit_score');">${circles[c][p]}</td>`
+                var cell = `<td style="cursor:pointer;"><input id="${p}_${c}" type="number" class="w-100 player-circle-score form-control form-control-lg text-center" value="${circles[c][p]}"></td>`;
                 var row_id = `#circle_${c}`
                 $(row_id).append(cell);
             }
@@ -84,6 +106,7 @@ function loadData() {
 
 
 function newGameDialog() {
+    $("#newGameList").remove();
     $("#modalDialog").modal('show');
     $("#modalDialog #modalInputs").hide();
     $("#modalDialog .modal-title").hide();
@@ -124,7 +147,7 @@ function openModal(modalTitle, id, action) {
     }
     $("#targetObj").val(id);
     $("#action").val(action);
-    if (action == 'edit_score' || action == 'edit_total_score') {
+    if (action == 'edit_total_score') {
         document.getElementById('inputField').type = 'number'
     } else {
         document.getElementById('inputField').type = 'text'
@@ -165,36 +188,40 @@ function getMaxScoreIndices() {
 }
 
 
+function editScore(target) {
+    var val = $("#"+target).val();
+    var ids = target.split('_');
+    var player = ids[0]
+    var circle = ids[1]
+    var next_target = `#${Number(player)+1}_${circle}`
+    var circles = JSON.parse(localStorage.getItem("circles"));
+    circles[circle][player] = Number(val);
+    localStorage.setItem('circles', JSON.stringify(circles));
+    var players = JSON.parse(localStorage.getItem("players"));
+    var score = Number(localStorage.getItem("total_score"))
+    for (var c = 0; c < circles.length; c++) {
+        if (score >= circles[c][player]) {
+            score = score - circles[c][player]
+        }
+    }
+    players[player].score = score;
+    localStorage.setItem('players', JSON.stringify(players));
+    calculateLeaderGap();
+    if (Number(player)+1 == players.length && Number(circle)+1 == circles.length) {
+        addCircle();
+    } else {
+        setTimeout(function() {
+            loadData();
+        }, 50);
+        setTimeout(function() {
+            $(next_target).focus();
+        }, 100);
+    }
+}
+
+
 function submitModal() {
     var action = $("#action").val();
-    if (action == 'edit_score') {
-        var target = $("#targetObj").val();
-        var val = $("#inputField").val();
-        $("#"+target).html(val);
-        var ids = target.split('_');
-        var player = ids[0]
-        var circle = ids[1]
-        var circles = JSON.parse(localStorage.getItem("circles"));
-        circles[circle][player] = Number(val);
-        localStorage.setItem('circles', JSON.stringify(circles));
-        var players = JSON.parse(localStorage.getItem("players"));
-        var score = Number(localStorage.getItem("total_score"))
-        for (var c = 0; c < circles.length; c++) {
-            if (score >= circles[c][player]) {
-                score = score - circles[c][player]
-            }
-        }
-        players[player].score = score;
-        localStorage.setItem('players', JSON.stringify(players));
-        calculateLeaderGap();
-        if (Number(player)+1 == players.length && Number(circle)+1 == circles.length) {
-            addCircle();
-        }
-        $("#players").empty();
-        $("#circles_table").empty();
-        $('#modalDialog').modal('hide'); 
-        loadData();
-    }
     if (action == 'add_player') {
         addPlayer();
     }
@@ -216,9 +243,6 @@ function editTotalScore() {
     }
     localStorage.setItem('players', JSON.stringify(players));
     localStorage.setItem('total_score', new_total_score);
-    $("#players").empty();
-    $("#circles_table").empty();
-    $('#modalDialog').modal('hide'); 
     loadData();
 }
 
@@ -260,9 +284,6 @@ function deletePlayer(id) {
         }
         calculateLeaderGap();
         localStorage.setItem('circles', JSON.stringify(circles));
-        $("#players").empty();
-        $("#circles_table").empty();
-        $("#board_sectors_row").empty();
         loadData();
     } else {
         return false;
@@ -284,9 +305,6 @@ function movePlayer(old_index, value) {
             }
             localStorage.setItem('circles', JSON.stringify(circles));
         }
-        $("#players").empty();
-        $("#circles_table").empty();
-        $("#board_sectors_row").empty();
         loadData();
     }
 }
@@ -301,9 +319,10 @@ function addCircle() {
     }
     circles.push(new_circle)
     localStorage.setItem('circles', JSON.stringify(circles));
-    $("#players").empty();
-    $("#circles_table").empty();
     loadData();
+    setTimeout(function() {
+        $('.player-circle-score').first().val('').focus();
+    }, 100);
 }
 
 
@@ -324,10 +343,6 @@ function addPlayer() {
     }
     localStorage.setItem('circles', JSON.stringify(circles));
     calculateLeaderGap();
-    $("#players").empty();
-    $("#circles_table").empty();
-    $("#board_sectors_row").empty();
-    $('#modalDialog').modal('hide'); 
     loadData();
 }
 
@@ -339,10 +354,6 @@ function renamePlayer() {
     var players = JSON.parse(localStorage.getItem("players"));
     players[player].name = new_name;
     localStorage.setItem('players', JSON.stringify(players));
-    $("#players").empty();
-    $("#circles_table").empty();
-    $("#board_sectors_row").empty();
-    $('#modalDialog').modal('hide');
     loadData();
 }
 
@@ -370,12 +381,6 @@ function clearTable() {
         localStorage.setItem('max_score', 1);
         localStorage.setItem('players', JSON.stringify(players));
     }
-    $("#players").empty();
-    $("#circles_table").empty();
-    $("#board_sectors_row").empty();
-    $("#board_501").hide();
-    $("#board_sectors").hide();
-    $('#modalDialog').modal('hide');
     loadData();
 }
 
