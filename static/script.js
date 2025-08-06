@@ -13,10 +13,17 @@ $(document).ready(function () {
         if ($(this).val() === '0') {
             $(this).val('');
         }
-    }).on('blur', function () {
+        var ids = this.id.split('_');
+        var player = ids[0]
+        $("#player_"+player+"_score").addClass('pulsing');
+    })
+    $(document).on('blur', '.player-circle-score', function () {
         if ($(this).val() === '') {
             $(this).val('0');
         }
+        var ids = this.id.split('_');
+        var player = ids[0]
+        $("#player_"+player+"_score").removeClass('pulsing');
     });
     $(document).on('keydown change', '.player-circle-score', function(e) {
         if (e.type === 'keydown' && e.which !== 13) return;
