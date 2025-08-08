@@ -225,7 +225,7 @@ function editScore(target) {
         }, 100);
     }
     if (val < 26) {
-        showNotificationImage('/static/img/ishak.png');
+        showNotificationImage('/static/img/ishak2.png');
     }
     if (val >= 100) {
         showConfetti();
@@ -404,10 +404,9 @@ function showNotificationImage(imageSrc) {
     img.src = imageSrc;
     img.className = 'notification-image';
     img.style.position = 'fixed';
-    img.style.bottom = '-200px'; // Начальное положение вне экрана
-    img.style.left = '50%';
-    img.style.transform = 'translateX(-50%)';
-    img.style.transition = 'bottom 300ms ease-in-out';
+    img.style.top = '100px'; // Начальное положение вне экрана
+    img.style.right = '-200px';
+    img.style.transition = 'right 300ms ease-in-out';
     img.style.zIndex = '10000';
 
     // Добавляем изображение в body
@@ -415,12 +414,12 @@ function showNotificationImage(imageSrc) {
 
     // Анимация: выдвигаем на экран
     setTimeout(() => {
-        img.style.bottom = '0px'; // Позиция на экране
+        img.style.right = '0px'; // Позиция на экране
     }, 100);
 
     // Через 1 секунду скрываем изображение
     setTimeout(() => {
-        img.style.bottom = '-200px';
+        img.style.right = '-200px';
         setTimeout(() => {
             img.remove(); // Удаляем элемент после анимации
         }, 300);

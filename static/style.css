@@ -130,8 +130,8 @@ body {
 }
 
 .notification-image {
-    width: auto;
-    height: 200px;
+    width: 200px;
+    height: auto;
 }
 
 .confetti-container {
