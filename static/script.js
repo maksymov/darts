@@ -224,6 +224,12 @@ function editScore(target) {
             $(next_target).focus();
         }, 100);
     }
+    if (val < 26) {
+        showNotificationImage('/static/img/ishak.png');
+    }
+    if (val >= 100) {
+        showConfetti();
+    }
 }
 
 
@@ -390,6 +396,61 @@ function clearTable() {
     }
     loadData();
 }
+
+
+function showNotificationImage(imageSrc) {
+    // Создаем элемент изображения
+    const img = document.createElement('img');
+    img.src = imageSrc;
+    img.className = 'notification-image';
+    img.style.position = 'fixed';
+    img.style.bottom = '-200px'; // Начальное положение вне экрана
+    img.style.left = '50%';
+    img.style.transform = 'translateX(-50%)';
+    img.style.transition = 'bottom 300ms ease-in-out';
+    img.style.zIndex = '10000';
+
+    // Добавляем изображение в body
+    document.body.appendChild(img);
+
+    // Анимация: выдвигаем на экран
+    setTimeout(() => {
+        img.style.bottom = '0px'; // Позиция на экране
+    }, 100);
+
+    // Через 1 секунду скрываем изображение
+    setTimeout(() => {
+        img.style.bottom = '-200px';
+        setTimeout(() => {
+            img.remove(); // Удаляем элемент после анимации
+        }, 300);
+    }, 1000);
+}
+
+
+function showConfetti(duration = 3000) {
+    const container = document.getElementById('confetti');
+    const confettiCount = 50;
+    const fadeDuration = 1000;
+
+    for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.left = Math.random() * window.innerWidth + 'px';
+        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        confetti.style.animationDuration = (Math.random() * duration + duration).toString() + 'ms';
+        container.appendChild(confetti);
+
+        // Добавляем анимацию исчезания
+        confetti.addEventListener('animationend', () => {
+            confetti.style.animation = `fadeOut ${fadeDuration}ms ease forwards`;
+
+            setTimeout(() => {confetti.remove();}, fadeDuration)
+        });
+
+    }
+}
+
 
 function checkForSWUpdate() {
   if ('serviceWorker' in navigator) {

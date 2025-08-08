@@ -128,3 +128,42 @@ body {
 .pulsing {
   animation: pulse 1s ease-in-out infinite;
 }
+
+.notification-image {
+    width: auto;
+    height: 200px;
+}
+
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  animation: fall linear 3s, fade linear 3s;
+}
+
+@keyframes fall {
+  from { top: -20px; }
+  to { top: 100%; }
+}
+
+@keyframes fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
