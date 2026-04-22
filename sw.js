@@ -1,5 +1,5 @@
 // static/sw.js
-const CACHE_NAME = 'darts-cache-2025-08-08-1326';
+const CACHE_NAME = 'darts-cache-2026-04-22-1606';
 const urlsToCache = [
   '/',
   '/static/script.js',
