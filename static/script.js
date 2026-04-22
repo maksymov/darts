@@ -37,7 +37,7 @@ $(document).ready(function () {
 
 const GAMES = {
     '501': {
-        'title': 'Сброс очков',
+        'title': 'Х01',
         'desc': "Необходимо сбросить 501 или другое выбранное количество очков. Последний бросок должен быть в удвоение. Если игрок набирает больше того, что у него осталось, последний круг не засчитывается.",
         'total_score': 501,
     },
@@ -47,7 +47,7 @@ const GAMES = {
     }
 }
 
-function loadData() {
+function loadData(next_target=false) {
     $("#players").empty();
     $("#circles_table").empty();
     $("#board_sectors_row").empty();
@@ -92,6 +92,11 @@ function loadData() {
                 var row_id = `#circle_${c}`
                 $(row_id).append(cell);
             }
+        }
+        if (next_target){
+            $(next_target).focus();
+        } else {
+            $('.player-circle-score').first().val('').focus();
         }
     }
     if (game == 'sectors') {
@@ -195,7 +200,23 @@ function getMaxScoreIndices() {
 }
 
 
+// Глобальная переменная для предотвращения двойного вызова editScore
+let isEditScoreProcessing = false;
+
 function editScore(target) {
+    // Если функция уже выполняется, выходим
+    if (isEditScoreProcessing) {
+        return;
+    }
+    
+    // Устанавливаем флаг выполнения
+    isEditScoreProcessing = true;
+    
+    // Сбрасываем флаг после завершения (с небольшой задержкой)
+    setTimeout(() => {
+        isEditScoreProcessing = false;
+    }, 100);
+    
     var val = $("#"+target).val();
     var ids = target.split('_');
     var player = ids[0]
@@ -206,11 +227,13 @@ function editScore(target) {
     localStorage.setItem('circles', JSON.stringify(circles));
     var players = JSON.parse(localStorage.getItem("players"));
     var score = Number(localStorage.getItem("total_score"))
+    var init_score = Number(localStorage.getItem("total_score"))
     for (var c = 0; c < circles.length; c++) {
         if (score >= circles[c][player]) {
             score = score - circles[c][player]
         }
     }
+    
     players[player].score = score;
     localStorage.setItem('players', JSON.stringify(players));
     calculateLeaderGap();
@@ -218,17 +241,48 @@ function editScore(target) {
         addCircle();
     } else {
         setTimeout(function() {
-            loadData();
-        }, 50);
-        setTimeout(function() {
-            $(next_target).focus();
-        }, 100);
+            loadData(next_target);
+        }, 300);
     }
-    if (val < 26) {
-        showNotificationImage('/static/img/ishak2.png');
+
+    if (score == 0) {
+        showConfetti(duration = 3000)
     }
-    if (val >= 100) {
+    if (val < 10 && init_score >= 50) {
+        multiplyEmoji(target, '💩')
+    }
+    else if (val < 18 && init_score >= 50) {
+        multiplyEmoji(target, '👨‍🦽')
+    }
+    else if (val < 26 && init_score >= 50) {
+        showNotificationImage('/static/img/ishak2.png', 'right-top');
+        multiplyEmoji(target, '🫎')
+    }
+    else if (val == 69) {
+        multiplyEmoji(target, '🫦')
+    }
+    else if (val >= 140) {
         showConfetti();
+        multiplyEmoji(target, '👑')
+    }
+    else if (val >= 100) {
+        showConfetti();
+        multiplyEmoji(target, '😎')
+    }
+    else if (val >= 60) {
+        multiplyEmoji(target, '💪')
+    }
+
+    //setTimeout(function() {
+    //    loadData();
+    //    $('.player-circle-score').first().val('').focus();
+    //}, 300);
+}
+
+
+function multiplyEmoji(target, emoji) {
+    for (let i = 0; i < 5; i++) {
+        setTimeout(() => createFlyingEmoji(target, emoji), i * 100);
     }
 }
 
@@ -332,10 +386,9 @@ function addCircle() {
     }
     circles.push(new_circle)
     localStorage.setItem('circles', JSON.stringify(circles));
-    loadData();
     setTimeout(function() {
-        $('.player-circle-score').first().val('').focus();
-    }, 100);
+        loadData();
+    }, 300);
 }
 
 
@@ -398,32 +451,155 @@ function clearTable() {
 }
 
 
-function showNotificationImage(imageSrc) {
+// Функция для создания летающих эмодзи
+function createFlyingEmoji(target, emoji) {
+    const emoji_div = document.createElement('div');
+    emoji_div.textContent = emoji;
+    emoji_div.style.position = 'fixed';
+    emoji_div.style.fontSize = '3rem';
+    emoji_div.style.zIndex = '1000';
+    emoji_div.style.pointerEvents = 'none';
+    emoji_div.style.userSelect = 'none';
+    
+    // Начальная позиция (центр поля ввода)
+    const inputRect = document.getElementById(target).getBoundingClientRect();
+    const startX = inputRect.left + inputRect.width / 2;
+    const startY = inputRect.top + inputRect.height / 2;
+    
+    emoji_div.style.left = startX + 'px';
+    emoji_div.style.top = startY + 'px';
+    
+    document.body.appendChild(emoji_div);
+    
+    // Случайное направление и анимация
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 100 + Math.random() * 150;
+    const endX = startX + Math.cos(angle) * distance;
+    const endY = startY + Math.sin(angle) * distance;
+    
+    // Анимация
+    const duration = 800 + Math.random() * 1700;
+    const startTime = Date.now();
+    
+    function animate() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Квадратичное замедление
+        const ease = 1 - Math.pow(1 - progress, 2);
+        
+        const currentX = startX + (endX - startX) * ease;
+        const currentY = startY + (endY - startY) * ease;
+        
+        emoji_div.style.left = currentX + 'px';
+        emoji_div.style.top = currentY + 'px';
+        emoji_div.style.opacity = 1 - progress;
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            document.body.removeChild(emoji_div);
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+
+// Глобальная переменная для отслеживания активного уведомления
+let activeNotification = null;
+
+function showNotificationImage(imageSrc, position = 'top-right') {
+    // Если уже есть активное уведомление, не создаем новое
+    if (activeNotification) {
+        return;
+    }
+
     // Создаем элемент изображения
     const img = document.createElement('img');
     img.src = imageSrc;
     img.className = 'notification-image';
     img.style.position = 'fixed';
-    img.style.top = '100px'; // Начальное положение вне экрана
-    img.style.right = '-200px';
-    img.style.transition = 'right 300ms ease-in-out';
     img.style.zIndex = '10000';
+    img.style.maxWidth = '200px'; // Ограничим размер, но больше чем было
+    img.style.maxHeight = '200px'; // Ограничим высоту
+    img.style.objectFit = 'contain'; // Сохраняем пропорции
+    img.style.transition = 'all 300ms ease-in-out';
+    img.style.border = 'none'; // Убираем рамку
+    img.style.borderRadius = '0'; // Убираем скругление
+
+    // Начальные и конечные позиции в зависимости от положения
+    let startPos = {};
+    let endPos = {};
+    const offset = -10; // Отступ от края
+    const hiddenOffset = 200; // Смещение за экран
+
+    switch (position) {
+        case 'top-left':
+            startPos = { top: '-200px', left: '100px' };
+            endPos = { top: `-10px`, left: `100px` };
+            break;
+        case 'top-right':
+            startPos = { top: '-200px', right: '100px' };
+            endPos = { top: `-10px`, right: `100px` };
+            break;
+        case 'right-top':
+            startPos = { top: '100px', right: '-200px' };
+            endPos = { top: `100px`, right: `-10px` };
+            break;
+        case 'right-bottom':
+            startPos = { bottom: '100px', right: '-200px' };
+            endPos = { bottom: `100px`, right: `-10px` };
+            break;
+        case 'bottom-right':
+            startPos = { bottom: '-200px', right: '-200px' };
+            endPos = { bottom: `${offset}px`, right: `${offset}px` };
+            break;
+        case 'bottom-left':
+            startPos = { bottom: '-200px', left: '-200px' };
+            endPos = { bottom: `${offset}px`, left: `${offset}px` };
+            break;
+        case 'left-bottom':
+            startPos = { bottom: '-200px', left: '-200px' };
+            endPos = { bottom: `${offset}px`, left: `${offset}px` };
+            break;
+        case 'left-top':
+            startPos = { top: '-200px', left: '-200px' };
+            endPos = { top: `${offset}px`, left: `${offset}px` };
+            break;
+        default:
+            // По умолчанию top-right
+            startPos = { top: '100px', right: '-200px' };
+            endPos = { top: `${offset}px`, right: `${offset}px` };
+    }
+
+    // Применяем начальные позиции
+    Object.assign(img.style, startPos);
 
     // Добавляем изображение в body
     document.body.appendChild(img);
+    
+    // Сохраняем ссылку на активное уведомление
+    activeNotification = img;
 
-    // Анимация: выдвигаем на экран
-    setTimeout(() => {
-        img.style.right = '0px'; // Позиция на экране
-    }, 100);
-
-    // Через 1 секунду скрываем изображение
-    setTimeout(() => {
-        img.style.right = '-200px';
+    // Используем requestAnimationFrame для более плавной анимации на слабых устройствах
+    requestAnimationFrame(() => {
+        // Анимация: выдвигаем на экран
         setTimeout(() => {
-            img.remove(); // Удаляем элемент после анимации
-        }, 300);
-    }, 1000);
+            Object.assign(img.style, endPos);
+        }, 50);
+    });
+
+    // Через 1.5 секунды скрываем изображение
+    setTimeout(() => {
+        Object.assign(img.style, startPos);
+        setTimeout(() => {
+            if (img.parentNode) {
+                img.remove(); // Удаляем элемент после анимации
+            }
+            activeNotification = null; // Сбрасываем ссылку
+        }, 350);
+    }, 1500);
 }
 
 
