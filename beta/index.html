@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#151916">
+  <meta name="description" content="Дартс онлайн — счёт для вашей игры. X01 и по секторам, с телефона, планшета или телевизора. Без регистрации.">
+  <title>Дартс — ваш домашний клуб</title>
+  <meta name="apple-mobile-web-app-title" content="Дартс онлайн">
+  <meta name="author" content="Дартс онлайн">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Дартс онлайн","description":"Онлайн-калькулятор для подсчёта очков в дартс. Играйте с друзьями без регистрации.","url":"https://дартс-онлайн.рф","applicationCategory":"Game","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"}}</script>
+  <link rel="manifest" href="static/manifest.json">
+  <link rel="apple-touch-icon" href="static/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="static/style.css">
+  <script src="static/game.js" defer></script>
+  <script src="static/match-extras.js" defer></script>
+  <script src="static/match-card.js" defer></script>
+  <script src="static/script.js" defer></script>
+  <script>
+    try {
+      var theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.dataset.theme = theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
+      if (localStorage.getItem('darts.tv') === 'true') document.documentElement.classList.add('tv');
+    } catch (_) {}
+  </script>
+  <!-- Yandex.Metrika counter -->
+  <script type="text/javascript" >
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+    m[i].l=1*new Date();
+    for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(100045365, "init", {
+          clickmap:true,
+          trackLinks:true,
+          accurateTrackBounce:true
+    });
+  </script>
+
+  <noscript>
+    <div><img src="https://mc.yandex.ru/watch/100045365" style="position:absolute; left:-9999px;" alt="" /></div>
+    <p>Для полной функциональности сайта включите JavaScript.</p>
+  </noscript>
+<!-- /Yandex.Metrika counter -->
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к игре</a>
+  <header class="site-header">
+    <button class="brand" data-action="home" aria-label="Дартс — главный экран"><span class="brand-mark" aria-hidden="true">◎</span> дартс<span class="brand-dot">.</span></button>
+    <span class="beta-notice">Версия для разработки — может сильно измениться</span>
+    <nav class="header-actions" aria-label="Настройки">
+      <a class="icon-button" href="../" aria-label="Обычная версия" title="Обычная версия">←</a>
+      <button class="quiet-button" id="tv-toggle" data-action="tv" aria-pressed="false"><span aria-hidden="true">▣</span> Режим ТВ</button>
+      <button class="icon-button" data-action="settings" aria-label="Настройки оформления">◐</button>
+      <button class="icon-button" data-action="help" aria-label="Как управлять">?</button>
+    </nav>
+  </header>
+  <main id="main" tabindex="-1"></main>
+  <footer class="site-footer"><span>Хорошая компания. Точный бросок.</span><button class="text-button" data-action="about">О проекте ↗</button></footer>
+  <div class="remote-hint"><span><kbd>↑ ↓ ← →</kbd> выбор</span><span><kbd>OK</kbd> нажать</span><span><kbd>Назад</kbd> вернуться</span></div>
+  <div class="modal-backdrop" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title"></h2><button class="icon-button" data-action="close" aria-label="Закрыть окно">×</button></div><div id="dialog-content"></div></section></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></div>
+  <div id="confetti" aria-hidden="true"></div>
+  <noscript><p class="noscript">Для подсчёта очков включите JavaScript в браузере.</p></noscript>
+</body>
+</html>

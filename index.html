@@ -1,28 +1,74 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#151916">
-  <meta name="description" content="Дартс онлайн — счёт для вашей игры. X01 и по секторам, с телефона, планшета или телевизора. Без регистрации.">
-  <title>Дартс — ваш домашний клуб</title>
-  <meta name="apple-mobile-web-app-title" content="Дартс онлайн">
-  <meta name="author" content="Дартс онлайн">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Дартс онлайн","description":"Онлайн-калькулятор для подсчёта очков в дартс. Играйте с друзьями без регистрации.","url":"https://дартс-онлайн.рф","applicationCategory":"Game","offers":{"@type":"Offer","price":"0","priceCurrency":"RUB"}}</script>
+  <script src="static/jquery-3.7.0.min.js"></script>
+  <script src="static/fontawesome/all.min.js"></script>
+  <script src="static/script.js"></script>
+  <link href="static/bootstrap/scss/bootstrap.css" rel="stylesheet">
+  <link href="static/style.css" rel="stylesheet">
   <link rel="manifest" href="static/manifest.json">
-  <link rel="apple-touch-icon" href="static/img/apple-touch-icon.png">
-  <link rel="stylesheet" href="static/style.css">
-  <script src="static/game.js" defer></script>
-  <script src="static/match-extras.js" defer></script>
-  <script src="static/match-card.js" defer></script>
-  <script src="static/script.js" defer></script>
+  <link rel="apple-touch-icon" sizes="180x180" href="static/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Дартс онлайн">
+  <meta name="theme-color" content="#222">
+  <title>Дартс онлайн</title>
+  <meta name="description" content="Дартс онлайн — удобный калькулятор очков для игры в дартс с возможностью добавления игроков, редактирования данных и нескольких режимов игры. Играйте без регистрации!">
+  <meta name="keywords" content="дартс онлайн, подсчёт очков дартс, дартс калькулятор, игра в дартс, онлайн таблица дартс">
+  <meta name="author" content="Дартс онлайн">
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Дартс онлайн",
+    "description": "Онлайн-калькулятор для подсчёта очков в дартс. Играйте с друзьями без регистрации.",
+    "url": "https://дартс-онлайн.рф",
+    "applicationCategory": "Game",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "RUB"
+    }
+  }
+</script>
+
   <script>
-    try {
-      var theme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.dataset.theme = theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
-      if (localStorage.getItem('darts.tv') === 'true') document.documentElement.classList.add('tv');
-    } catch (_) {}
+    const getStoredTheme = () => localStorage.getItem('theme')
+    const setStoredTheme = theme => localStorage.setItem('theme', theme)
+    const getPreferredTheme = () => {
+        const storedTheme = getStoredTheme()
+        if (storedTheme) {
+            return storedTheme
+        } else {
+            localStorage.setItem('theme', 'auto');
+            return 'auto'
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    const setTheme = theme => {
+        if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        }
+        setStoredTheme(theme);
+    }
+    setTheme(getPreferredTheme());
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        const storedTheme = getStoredTheme()
+        if (storedTheme !== 'light' && storedTheme !== 'dark') {
+            setTheme(getPreferredTheme())
+        }
+    })
+    function setupSwitcher() {
+        const storedTheme = getStoredTheme()
+        if (storedTheme !== null) {
+            const currentRadio = document.querySelector(`.switcher__radio[value=${storedTheme}]`);
+            currentRadio.checked = true;
+        }
+    }
   </script>
+
   <!-- Yandex.Metrika counter -->
   <script type="text/javascript" >
     (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -43,25 +89,139 @@
     <p>Для полной функциональности сайта включите JavaScript.</p>
   </noscript>
 <!-- /Yandex.Metrika counter -->
+
 </head>
+
 <body>
-  <a class="skip-link" href="#main">Перейти к игре</a>
-  <header class="site-header">
-    <button class="brand" data-action="home" aria-label="Дартс — главный экран"><span class="brand-mark" aria-hidden="true">◎</span> дартс<span class="brand-dot">.</span></button>
-    <span class="club-label">ВАШ ДОМАШНИЙ КЛУБ</span>
-    <nav class="header-actions" aria-label="Настройки">
-      <button class="quiet-button" id="tv-toggle" data-action="tv" aria-pressed="false"><span aria-hidden="true">▣</span> Режим ТВ</button>
-      <button class="icon-button" data-action="settings" aria-label="Настройки оформления">◐</button>
-      <button class="icon-button" data-action="help" aria-label="Как управлять">?</button>
-    </nav>
-  </header>
-  <main id="main" tabindex="-1"></main>
-  <footer class="site-footer"><span>Хорошая компания. Точный бросок.</span><button class="text-button" data-action="about">О проекте ↗</button></footer>
-  <div class="remote-hint"><span><kbd>↑ ↓ ← →</kbd> выбор</span><span><kbd>OK</kbd> нажать</span><span><kbd>Назад</kbd> вернуться</span></div>
-  <div class="modal-backdrop" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title"></h2><button class="icon-button" data-action="close" aria-label="Закрыть окно">×</button></div><div id="dialog-content"></div></section></div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <div class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></div>
-  <div id="confetti" aria-hidden="true"></div>
-  <noscript><p class="noscript">Для подсчёта очков включите JavaScript в браузере.</p></noscript>
+  <nav class="navbar bg-dark border-bottom border-body navbar-expand-lg" data-bs-theme="dark">
+    <div class="container-fluid">
+      <div>
+        <button class="btn btn-success me-2" type="button" onclick="newGameDialog();">
+          <i class="fa-solid fa-bullseye"></i>
+          Новая игра
+        </button>
+        <button class="btn btn-outline-info me-2" type="button" onclick="openModal('Новый игрок', false, 'add_player')">
+          <i class="fa-solid fa-user-plus"></i>
+          <span class="d-none d-md-inline">
+            Добавить игрока
+          </span>
+        </button>
+        <button class="btn btn-outline-danger me-2" type="button" onclick="clearTable();">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span class="d-none d-md-inline">
+            Сброс
+          </span>
+        </button>
+        <a class="btn btn-outline-warning me-2" href="beta/">Бета</a>
+      </div>
+      <div>
+        <fieldset class="switcher">
+          <legend class="switcher__legend">Схема</legend>
+          <input class="switcher__radio switcher__radio--light" type="radio" name="color-scheme" value="light" aria-label="Светлая" onclick="setTheme('light')">
+          <input class="switcher__radio switcher__radio--auto" type="radio" name="color-scheme" value="auto" aria-label="Системная" checked="" onclick="setTheme('auto')">
+          <input class="switcher__radio switcher__radio--dark" type="radio" name="color-scheme" value="dark" aria-label="Тёмная" onclick="setTheme('dark')">
+          <div class="switcher__status"></div>
+        </fieldset>
+      </div>
+    </div>
+  </nav>
+
+  <div id="board_501" style="display: none;">
+
+    <div class="container text-center pt-4">
+      <h1 class="mb-4"><span class="badge text-bg-secondary" id="501_score" style="cursor:pointer" onclick="openModal('Новое значение', this.id, 'edit_total_score');"></span></h1>
+      <div class="row" id="players"></div>
+    </div>
+
+    <div class="container text-center mt-4">
+      <button class="btn btn-outline-success btn-sm mb-4" type="button" onclick="addCircle();">
+        <i class="fa-solid fa-plus-circle"></i>
+        Добавить круг
+      </button>
+
+      <table class="table" id="circles_table" style="table-layout: fixed;">
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="board_sectors" style="display: none;" class="container mt-4">
+    <div class="container text-center pt-4">
+      <h1 class="mb-4">По секторам</h1>
+      <div class="row" id="board_sectors_row"></div>
+    </div>
+  </div>
+
+  <footer class="footer mt-auto py-3 bg-dark text-white">
+    <div class="container text-center">
+      <main>
+        <p style="opacity: 0.5;">Используйте наш сайт для удобного подсчёта очков в дартс. Выберите режим игры, добавьте игроков и отслеживайте результаты в реальном времени.</p>
+      </main>
+      <div class="row">
+        <div class="col-12 col-sm-6 col-md-3 d-none d-md-block">
+          <img src="static/img/write.png" alt="" style="width: 100%; opacity: 0.6;">
+        </div>
+        <div class="col-12 col-sm-6 col-md-3 mt-2" style="vertical-align: top; font-size: x-large;">
+              <a href="https://github.com/maksymov/darts" class="text-white" style="text-decoration: none;">
+                <i class="fa-brands fa-github me-2"></i>
+              </a>
+              <a href="https://vk.com/maksymov.vlad" class="text-white" style="text-decoration: none;">
+                <i class="me-2 fa-brands fa-vk"></i>
+              </a>
+              <a href="https://t.me/MaKcuMoB" class="text-white" style="text-decoration: none;">
+                <i class="me-2 fa-brands fa-telegram"></i>
+              </a>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3 mt-1">
+          <a href="https://yoomoney.ru/to/410011276146968" class="btn btn-dark btn-lg" target="_blank">
+            На пивас
+            <i class="fa-solid fa-beer-mug-empty"></i>
+          </a>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3 d-none d-md-block">
+          <img src="static/img/donate.png" alt="Пожертвование на развитие проекта" style="width: 100%; opacity: 0.6;">
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="modal" tabindex="-1" id="modalDialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="modalInputs">
+            <div class="mt-3">
+              <input type="text" class="form-control" id="inputField">
+              <input type="hidden" class="form-control" id="targetObj">
+              <input type="hidden" class="form-control" id="action">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary" onclick="submitModal();">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confetti" class="confetti-container"></div>
+
+  <script src="static/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script>
+    const myModal = document.getElementById("modalDialog");
+    myModal.addEventListener('shown.bs.modal', () => {
+      $(myModal).find("input:visible:first").focus();
+    })
+  </script>
+
 </body>
 </html>

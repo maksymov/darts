@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
-const G = require('../static/game.js');
-const E = require('../static/match-extras.js');
+const G = require('../beta/static/game.js');
+const E = require('../beta/static/match-extras.js');
 function run() {
   let count=0;
   function check(name,fn){fn();count++;}
