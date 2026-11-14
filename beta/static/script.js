@@ -34,6 +34,7 @@
     document.documentElement.classList.toggle('game-active', view === 'game' && !!game && !G.finished(game));
     document.documentElement.classList.toggle('tv-results', view === 'game' && !!game && G.finished(game));
     document.documentElement.classList.toggle('nine-players-game', view === 'game' && !!game && game.players.length === 9);
+    document.documentElement.classList.toggle('compact-players-game', view === 'game' && !!game && (game.players.length === 2 || game.players.length === 3));
     document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
   }
   if (themeMedia.addEventListener) themeMedia.addEventListener('change', applyTheme);
@@ -62,7 +63,7 @@
   function fitPlayers() {
     const grid = document.querySelector('.players-grid');
     if (!grid || !game || !grid.children.length) return;
-    const main = $('main');
+    const main = $('main'), history = document.querySelector('.history');
     const savedMainScroll = main.scrollTop, savedWindowScroll = window.scrollY;
     function restoreScroll() {
       main.scrollTop = savedMainScroll;
@@ -72,13 +73,15 @@
     grid.style.removeProperty('--player-scale');
     grid.style.removeProperty('--player-height');
     const count = grid.children.length;
-    grid.classList.remove('adaptive-players');
-    grid.classList.add('fill-players');
+    const compact = count === 2 || count === 3;
+    grid.classList.remove('adaptive-players', 'fill-players');
+    if (!compact) grid.classList.add('fill-players');
     const scrollOffset = window.scrollY + main.scrollTop;
     const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY) - 8;
     const height = Math.max(0, available - grid.getBoundingClientRect().top - scrollOffset);
-    if (count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available) {
-      grid.style.setProperty('--player-height', `${height}px`);
+    if (count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
+        (!compact || historyExpanded || history.getBoundingClientRect().bottom + scrollOffset <= available)) {
+      if (!compact) grid.style.setProperty('--player-height', `${height}px`);
       restoreScroll();
       return;
     }
@@ -102,10 +105,11 @@
         const gridRect = grid.getBoundingClientRect();
         const bottom = gridRect.bottom + window.scrollY + main.scrollTop;
         const cardsFit = bottom <= available;
-        const score = (cardsFit ? 5000 : 0) + scale * 1000 -
+        const historyFits = cardsFit && (historyExpanded || history.getBoundingClientRect().bottom + window.scrollY + main.scrollTop <= available);
+        const score = (compact && historyFits ? 10000 : cardsFit ? 5000 : 0) + scale * 1000 -
           Math.max(0, bottom - available) * 20 -
           Math.abs(columns - desired) * 35 - (count % columns ? 10 : 0);
-        return measurements[index] = {columns, scale, score, cardsFit};
+        return measurements[index] = {columns, scale, score, cardsFit, historyFits};
       }
       function largestFit(property) {
         if (!measure(scales.length - 1)[property]) return null;
@@ -117,14 +121,14 @@
         }
         return measure(low);
       }
-      const candidate = largestFit('cardsFit') || measure(scales.length - 1);
+      const candidate = (compact && largestFit('historyFits')) || largestFit('cardsFit') || measure(scales.length - 1);
       if (!best || candidate.score > best.score) best = candidate;
       if (count === 9 && columns === 3) preferred = candidate;
     }
     if (preferred && preferred.cardsFit) best = preferred;
     grid.style.setProperty('--player-columns', best.columns);
     grid.style.setProperty('--player-scale', `${16 * best.scale}px`);
-    if (best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
+    if (!compact && best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
     restoreScroll();
   }
   let resizeTimer;

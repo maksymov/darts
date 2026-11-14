@@ -296,6 +296,23 @@
 .tv.tv-results .players-grid.fill-players .player-card{display:flex;flex-direction:column}
 .tv.game-active .players-grid.fill-players .player-bottom,
 .tv.tv-results .players-grid.fill-players .player-bottom{margin-top:auto}
+@media(max-height:700px){
+  .tv.compact-players-game .history th{padding:4px 6px;font-size:12px}
+  .tv.compact-players-game .history td{padding:2px 6px}
+  .tv.compact-players-game .history td button{min-height:30px;padding:4px 6px;font-size:12px}
+  .tv.compact-players-game .history-more{min-height:32px;margin-top:5px;padding:4px 8px}
+}
+@media(min-width:601px) and (max-width:900px){
+  .tv.tv-results.compact-players-game .game-layout{position:relative;display:block;padding-right:calc(max(190px,29vw) + 10px)}
+  .tv.tv-results.compact-players-game .game-sidebar{position:absolute;top:0;right:0;width:29vw;min-width:190px;margin:0}
+  .tv.tv-results.compact-players-game .history{min-width:0;margin-top:10px}
+}
+@media(max-width:600px){
+  .tv.compact-players-game .game-layout{display:grid;grid-template-columns:minmax(0,1fr)}
+  .tv.compact-players-game .scoreboard{grid-column:1;grid-row:1}
+  .tv.compact-players-game .history{grid-column:1;grid-row:2}
+  .tv.compact-players-game .game-sidebar{grid-column:1;grid-row:3}
+}
 .tv.game-active .players-grid.adaptive-players,
 .tv.tv-results .players-grid.adaptive-players{grid-template-columns:repeat(var(--player-columns,2),minmax(0,1fr))!important;gap:.35rem}
 .tv.game-active .players-grid.adaptive-players .player-card,
