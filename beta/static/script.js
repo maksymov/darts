@@ -23,14 +23,18 @@
   const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
   const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
   function persist() {
-    if (game && !storage.setItem('darts.v2', JSON.stringify(game))) toast('Память браузера недоступна. Не закрывайте вкладку до конца партии.');
+    if (game && !storage.setItem('darts.v2', JSON.stringify(game))) {
+      toast('Память браузера недоступна. Не закрывайте вкладку до конца партии.');
+      return false;
+    }
+    return true;
   }
   function applyTheme() {
     document.documentElement.dataset.theme = theme === 'auto' ? (themeMedia.matches ? 'dark' : 'light') : theme;
-    document.documentElement.classList.toggle('tv', tv);
+    document.documentElement.classList.add('tv');
     document.documentElement.classList.toggle('game-active', view === 'game' && !!game && !G.finished(game));
-    document.documentElement.classList.toggle('tv-results', tv && view === 'game' && !!game && G.finished(game));
-    document.documentElement.classList.toggle('remote-navigation', tv);
+    document.documentElement.classList.toggle('tv-results', view === 'game' && !!game && G.finished(game));
+    document.documentElement.classList.toggle('nine-players-game', view === 'game' && !!game && game.players.length === 9);
     $('tv-toggle').setAttribute('aria-pressed', String(tv));
     document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
   }
@@ -54,8 +58,67 @@
   function render(focus, scrollFocus) {
     $('main').innerHTML = view === 'home' ? homeHTML() : gameHTML();
     applyTheme();
+    fitPlayers();
     if (focus) focusTo(focus, scrollFocus);
   }
+  function fitPlayers() {
+    const grid = document.querySelector('.players-grid');
+    if (!grid || !game || !grid.children.length) return;
+    const main = $('main'), history = document.querySelector('.history');
+    grid.style.removeProperty('--player-columns');
+    grid.style.removeProperty('--player-scale');
+    const count = grid.children.length;
+    grid.classList.remove('adaptive-players');
+    const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom) - 8;
+    if (count <= 4 && grid.getBoundingClientRect().bottom <= available &&
+        (historyExpanded || history.getBoundingClientRect().bottom <= available)) return;
+    grid.classList.add('adaptive-players');
+    const desired = count === 9 ? 3 : Math.ceil(Math.sqrt(count * 1.6));
+    const maxColumns = Math.min(count, 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
+    const center = Math.min(desired, maxColumns);
+    const columnsToTry = Array.from(new Set([center, center - 1, center + 1, center - 2, center + 2, maxColumns, maxColumns - 1]))
+      .filter(columns => columns >= 1 && columns <= maxColumns);
+    const scales = [1, .9, .8, .7, .6, .5, .4, .3];
+    let best = null, preferred = null;
+    for (const columns of columnsToTry) {
+      grid.style.setProperty('--player-columns', columns);
+      const measurements = [];
+      function measure(index) {
+        if (measurements[index]) return measurements[index];
+        const scale = scales[index];
+        grid.style.setProperty('--player-scale', `${16 * scale}px`);
+        const gridRect = grid.getBoundingClientRect();
+        const historyRect = history.getBoundingClientRect();
+        const cardsFit = gridRect.bottom <= available;
+        const historyFits = cardsFit && (historyExpanded || historyRect.bottom <= available);
+        const score = (historyFits ? 10000 : cardsFit ? 5000 : 0) + scale * 1000 -
+          Math.max(0, gridRect.bottom - available) * 20 -
+          Math.abs(columns - desired) * 35 - (count % columns ? 10 : 0);
+        return measurements[index] = {columns, scale, score, cardsFit, historyFits};
+      }
+      function largestFit(property) {
+        if (!measure(scales.length - 1)[property]) return null;
+        let low = 0, high = scales.length - 1;
+        while (low < high) {
+          const middle = Math.floor((low + high) / 2);
+          if (measure(middle)[property]) high = middle;
+          else low = middle + 1;
+        }
+        return measure(low);
+      }
+      const candidate = largestFit('historyFits') || largestFit('cardsFit') || measure(scales.length - 1);
+      if (!best || candidate.score > best.score) best = candidate;
+      if (count === 9 && columns === 3) preferred = candidate;
+    }
+    if (preferred && preferred.cardsFit) best = preferred;
+    grid.style.setProperty('--player-columns', best.columns);
+    grid.style.setProperty('--player-scale', `${16 * best.scale}px`);
+  }
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fitPlayers, 100);
+  });
   function homeHTML() {
     const resume = game ? `<div class="resume-banner"><span class="avatar" aria-hidden="true">${G.winner(game) ? '🏆' : '↗'}</span><div><strong>${G.winner(game) ? 'Последняя партия' : 'Ваша партия ждёт'}</strong><p>${esc(modeName(game))} · ${game.players.length} ${plural(game.players.length,'игрок','игрока','игроков')} · ${game.turns.length} ${game.mode==='sectors'?plural(game.turns.length,'событие','события','событий'):plural(game.turns.length,'ход','хода','ходов')}</p></div><button id="resume" class="primary" data-action="resume">${G.winner(game) ? 'Посмотреть итог' : 'Продолжить игру'} →</button></div>` : '';
     const modes = [{mode:'x01',total:301,title:'Быстрая партия',sub:'Разминка или первый матч',symbol:'301'},{mode:'x01',total:501,title:'Классика',sub:'Большая игра до нуля',symbol:'501'},{mode:'sectors',total:501,title:'По секторам',sub:'Путь от 1 до яблочка',symbol:'◎'}];
@@ -69,17 +132,19 @@
     const best = game.mode==='x01' ? Math.min(...rows.map(p=>p.remaining)) : Math.max(...rows.map(p=>p.progress));
     const leaders = rows.filter(p=>(game.mode==='x01'?p.remaining:p.progress)===best);
     const round = active ? active.visits+1 : 1;
+    const gridClass = rows.length === 9 ? 'nine-players' : rows.length === 3 ? 'three-players' : '';
     const cards = rows.map(p => {
       const isActive = !complete && (!win || finishingRound) && p.id === game.activeId, leader = leaders.length === 1 && leaders[0].id === p.id && rows.length > 1;
       const remaining = game.mode === 'x01' ? p.remaining : (G.SECTORS[p.progress] || '✓');
       const gap = game.mode === 'x01' ? p.remaining - best : best - p.progress;
-      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2 class="${leader?'leader-name':''}">${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</h2><small>${p.visits} ${plural(p.visits,'ход','хода','ходов')}</small></div><button class="icon-button" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}">⋯</button></div><div class="turn-label">${isActive?'● Ваш ход':win&&win.id===p.id?'Победитель':game.mode==='x01'?'Осталось очков':'Следующая цель'}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom"><span>Последний: <strong>${p.last===null?'—':esc(p.last)}</strong></span><span class="leader-gap ${gap?'has-gap':''}">${gap?`${game.mode==='x01'?'+':''}${gap} отстал`:leader?'Лидер':'На равных'}</span></div>${game.mode==='sectors'?`<div class="sector-track" aria-label="Прогресс по секторам">${G.SECTORS.map((s,i)=>`<span class="sector-step ${i<p.progress?'done':i===p.progress?'current':''}">${s}</span>`).join('')}</div>`:''}</article>`;
+      const turnLabel = isActive ? '● Ваш ход' : win && win.id === p.id ? 'Победитель' : game.mode === 'sectors' ? 'Следующая цель' : '';
+      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2 class="${leader?'leader-name':''}">${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</h2></div><button class="icon-button" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}">⋯</button></div>${turnLabel?`<div class="turn-label">${turnLabel}</div>`:''}<div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom"><span>Последний: <strong>${p.last===null?'—':esc(p.last)}</strong></span><span class="leader-gap ${gap?'has-gap':''}">${gap?`${game.mode==='x01'?'+':''}${gap} отстал`:leader?'Лидер':'На равных'}</span></div>${game.mode==='sectors'?`<div class="sector-track" aria-label="Прогресс по секторам">${G.SECTORS.map((s,i)=>`<span class="sector-step ${i<p.progress?'done':i===p.progress?'current':''}">${s}</span>`).join('')}</div>`:''}</article>`;
     }).join('');
     const controller = win && !finishingRound
       ? '<aside class="controller"><div class="eyebrow">ДО НОВОЙ ВСТРЕЧИ У МИШЕНИ</div><h2>Отличная партия.</h2><p class="mode-description">Результаты сохранены. Можно сыграть ещё раз с тем же составом или выбрать новый режим.</p><button class="submit-score" data-action="home">Выбрать игру →</button></aside>'
       : game.mode === 'x01' ? controllerHTML(active) : sectorControllerHTML(active);
     const winBanner = !win ? '' : `<div class="win-banner"><div><h2>🏆 ${esc(win.name)} — победа!</h2><p>${complete?'Мишень покорена. Хорошая игра.':finishingRound?`Доигрываем круг: ходит ${esc(active.name)}.`:`До конца круга осталось: ${pendingFinish.map(id=>esc(game.players.find(p=>p.id===id).name)).join(', ')}.`}</p></div><div class="win-controls">${complete?`<button id="match-card-open" class="primary" data-action="match-card">Карточка матча ↗</button><button id="rematch" data-action="rematch">Ещё партию</button><button data-action="undo">Отменить ход</button>`:finishingRound?'':`<button class="primary" data-action="continue-round">Доиграть круг · ${pendingFinish.length}</button>`}</div></div>`;
-    return `<div class="tv-game-toolbar"><h1>${esc(modeName(game))}</h1><div class="tv-game-tools"><button data-action="home">← Назад</button><button data-action="restart">↶ Заново</button><button data-action="shuffle-players">Перемешать</button><button class="primary" data-action="add-match-player">＋ Игрок</button></div></div><div class="match-top"><div><div class="eyebrow"><span class="live-dot"></span> ${complete?'ПАРТИЯ ЗАВЕРШЕНА':'ИГРА ИДЁТ'}</div><div class="match-meta"><h1>${esc(modeName(game))}</h1><span class="pill">${complete?'Финиш':'Круг '+round}</span></div></div><div class="match-tools"><button class="quiet-button" data-action="home">← <span class="new-game-label">Новая игра</span><span class="mobile-menu-label">Меню</span></button><button class="icon-button" data-action="match-menu" aria-label="Меню партии">⋯</button></div></div>${winBanner}<div class="game-layout ${rows.length>4?'many-players-layout':''}"><div class="scoreboard"><div class="players-grid ${rows.length>4?'many-players':''} ${rows.length===3?'three-players':''}">${cards}</div></div><div class="game-sidebar">${controller}${win?commentatorHTML():''}</div><section class="history ${rows.length>4?'many-players-history':''}"><div class="section-head"><h2>История партии</h2><span>Нажмите на ход, чтобы исправить</span></div>${historyHTML()}</section></div>`;
+    return `<div class="tv-game-toolbar"><h1>${esc(modeName(game))}</h1><div class="tv-game-tools"><button data-action="home">← Назад</button><button data-action="restart">↶ Заново</button><button data-action="shuffle-players">Перемешать</button><button class="primary" data-action="add-match-player">＋ Игрок</button></div></div><div class="match-top"><div><div class="eyebrow"><span class="live-dot"></span> ${complete?'ПАРТИЯ ЗАВЕРШЕНА':'ИГРА ИДЁТ'}</div><div class="match-meta"><h1>${esc(modeName(game))}</h1><span class="pill">${complete?'Финиш':'Круг '+round}</span></div></div><div class="match-tools"><button class="quiet-button" data-action="home">← <span class="new-game-label">Новая игра</span><span class="mobile-menu-label">Меню</span></button><button class="icon-button" data-action="match-menu" aria-label="Меню партии">⋯</button></div></div>${winBanner}<div class="game-layout ${rows.length>4?'many-players-layout':''}"><div class="scoreboard"><div class="players-grid ${rows.length>4?'many-players':''} ${gridClass}">${cards}</div></div><div class="game-sidebar">${controller}${win?commentatorHTML():''}</div><section class="history ${rows.length>4?'many-players-history':''}"><div class="section-head"><h2>История партии</h2><span>Нажмите на ход, чтобы исправить</span></div>${historyHTML()}</section></div>`;
   }
   function plural(n,a,b,c) { return n%10===1&&n%100!==11?a:n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?b:c; }
   function keypadHTML(inDialog) { return `<div class="keypad" aria-label="Цифровая панель">${['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(v=>`<button ${v==='5'?'id="'+(inDialog?'dialog-five':'key-five')+'"':''} data-action="digit" data-value="${v}" ${v==='clear'||v==='delete'?'class="small-key"':''} aria-label="${v==='clear'?'Очистить ввод':v==='delete'?'Удалить последнюю цифру':v}">${v==='clear'?'Сброс':v==='delete'?'⌫':v}</button>`).join('')}</div>`; }
@@ -105,7 +170,7 @@
     game.turns.forEach((t,i)=>{if(visits[t.playerId]){const bust=game.mode==='x01'&&(t.kind==='bust'||t.score>remaining[t.playerId]);if(!bust)remaining[t.playerId]-=t.score;visits[t.playerId].push({...t,index:i,displayBust:bust});}});
     const count=Math.max(...Object.values(visits).map(v=>v.length));
     const start=historyExpanded?0:Math.max(0,count-5);
-    let html=`<div class="history-scroll"><table style="min-width:${Math.max(300,game.players.length*115+65)}px"><thead><tr><th>Круг</th>${game.players.map(p=>`<th scope="col">${esc(p.name)}</th>`).join('')}</tr></thead><tbody>`;
+    let html=`<div class="history-scroll"><table style="min-width:${Math.max(300,game.players.length*115+65)}px"><thead><tr><th>Круг</th>${game.players.map(p=>`<th scope="col" title="${esc(p.name)}">${esc(p.name)}</th>`).join('')}</tr></thead><tbody>`;
     for(let r=count-1;r>=start;r--) html+=`<tr><td>${r+1}</td>${game.players.map(p=>{const t=visits[p.id][r];if(!t)return '<td>—</td>';const label=game.mode==='sectors'?(t.kind==='hit'?'✓ Попал':'Мимо'):t.displayBust?'Перебор':t.score;return `<td><button data-action="edit-turn" data-index="${t.index}" class="${t.displayBust?'bust':''}" aria-label="Исправить: ${esc(p.name)}, круг ${r+1}, ${label}">${label}</button></td>`;}).join('')}</tr>`;
     return html+`</tbody></table></div>${count>5?`<button class="history-more" data-action="history">${historyExpanded?'Свернуть историю':'Все круги · '+count}</button>`:''}`;
   }
@@ -129,7 +194,7 @@
   function confirmAction(title,text,action) { openModal(title,`<p>${esc(text)}</p><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="${action}">Да, продолжить</button></div>`,'confirm'); }
   function nameDialog(index,source,pendingPlayer) {
     const p=pendingPlayer||(source==='draft'?draft.players[index]:game.players.find(p=>p.id===index));
-    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" value="${esc(p.name)}" ${tv?'readonly':''}><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><button class="text-button" data-action="toggle-letters" ${tv?'hidden':''}>Экранная клавиатура</button><div id="letter-board" ${tv?'':'hidden'}>${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
+    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
   }
   function lettersHTML(lang) { return `<div class="name-keyboard" aria-label="Буквы имени">${(lang==='ru'?'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ':'ABCDEFGHIJKLMNOPQRSTUVWXYZ').split('').map(c=>`<button data-action="letter" data-value="${c}">${c}</button>`).join('')}<button class="wide" data-action="letter" data-value="space">Пробел</button><button class="wide" data-action="letter" data-value="delete">⌫</button><button class="wide" data-action="letter" data-value="clear">Очистить</button><button class="wide" data-action="alphabet">${lang==='ru'?'ABC':'АБВ'}</button></div>`; }
   function numberDialog(title,value,type,data) {
@@ -206,7 +271,7 @@
   function record(score,kind) {
     try {
       const previousWinner=G.winner(game),p=game.players.find(p=>p.id===game.activeId);const busted=game.mode==='x01'&&(kind==='bust'||score>G.standings(game).find(row=>row.id===p.id).remaining);G.record(game,score,kind);buffer='';persist();
-      const win=G.winner(game),complete=G.finished(game);if(!previousWinner)updateComment();render(complete?'match-card-open':win?(game.finishingRound?'key-five':'continue-round'):game.mode==='x01'?'key-five':'sector-hit',!tv);
+      const win=G.winner(game),complete=G.finished(game);if(!previousWinner)updateComment();render(complete?'match-card-open':win?(game.finishingRound?'key-five':'continue-round'):game.mode==='x01'?'key-five':'sector-hit',false);
       const next=game.players.find(p=>p.id===game.activeId);
       announce(complete?`${win.name} побеждает! Круг доигран.`:win?previousWinner?`Ход записан. Осталось игроков: ${G.pendingFinish(game).length}.`:`${win.name} побеждает! Осталось доиграть круг.`:kind==='hit'?`Сектор закрыт. Следующая цель: ${G.SECTORS[G.standings(game).find(row=>row.id===p.id).progress]}.`:`Ход записан. Сейчас ходит ${next.name}.`);
       if(win&&!previousWinner)celebrate();else if(!win&&!busted&&kind!=='miss')react(score);
@@ -218,7 +283,7 @@
     let next=input.value;if(value==='clear')next='';else if(value==='delete')next=next.slice(0,-1);else if(next.length<Number(input.maxLength))next=(next==='0'?'':next)+value;
     input.value=next;if($('modal').hidden)buffer=next;
   }
-  function startGame() { game=G.create(draft.mode,draft.total,draft.players);comment=idleComment('',game.players[0].name);lastCommentAt=0;view='game';buffer='';historyExpanded=false;persist();render(game.mode==='x01'?'key-five':'sector-hit',!tv);announce('Партия началась. Ходит '+game.players[0].name); }
+  function startGame() { game=G.create(draft.mode,draft.total,draft.players);comment=idleComment('',game.players[0].name);lastCommentAt=0;view='game';buffer='';historyExpanded=false;persist();render(game.mode==='x01'?'key-five':'sector-hit',false);announce('Партия началась. Ходит '+game.players[0].name); }
   function goHome() { buffer='';view='home';render(game?'resume':'mode-1'); }
   function celebrate() {
     if(!effects||motionMedia.matches)return;
@@ -231,7 +296,7 @@
     const action=button.dataset.action,value=button.dataset.value,player=button.dataset.player,index=Number(button.dataset.index);
     if(action==='close'){closeModal();return;}
     if(action==='home'){if(!$('modal').hidden)closeModal();goHome();return;}
-    if(action==='tv'){const key=token(button);tv=!tv;storage.setItem('darts.tv',String(tv));applyTheme();if(modalType==='settings'){settingsDialog();focusTo(key);}else{render(key);}toast(tv?'Режим ТВ: стрелки — выбор, OK — нажать, Назад — вернуться.':'Обычный размер. Управление стрелками по-прежнему доступно.');return;}
+    if(action==='tv'){const key=token(button);tv=!tv;storage.setItem('darts.tv',String(tv));applyTheme();if(modalType==='settings'){settingsDialog();focusTo(key);}else{render(key);}toast(tv?'Системная цифровая клавиатура отключена.':'Системная цифровая клавиатура включена.');return;}
     if(action==='settings'){settingsDialog();return;}
     if(action==='match-card'){openMatchCard();return;}
     if(action==='download-card'){downloadCard();return;}
@@ -311,17 +376,42 @@
     if(/^\d$/.test(key)&&(($('modal').hidden&&view==='game'&&game.mode==='x01'&&!G.winner(game))||['custom','edit'].includes(modalType))){event.preventDefault();digit(key);const target=$('modal').hidden?$('score-input'):$('dialog-number');if(target)target.focus();return;}
     if(key==='Backspace'&&(($('modal').hidden&&view==='game')||['custom','edit'].includes(modalType))){event.preventDefault();digit('delete');}
   });
-  document.addEventListener('pointerdown',()=>{if(!tv)document.documentElement.classList.remove('remote-navigation');});
+  document.addEventListener('pointerdown',()=>document.documentElement.classList.remove('remote-navigation'));
   // Preserve current state before the browser or the device goes into the background.
   document.addEventListener('visibilitychange',()=>{if(document.hidden)persist();});
-  applyTheme();render();if(tv)focusTo(game?'resume':'mode-1');if(game)persist();
+  applyTheme();render();if(game)persist();
   if('serviceWorker' in navigator && (location.protocol==='https:'||['localhost','127.0.0.1','::1'].includes(location.hostname))) {
+    let registration, reloading = false, hadController = !!navigator.serviceWorker.controller;
+    const notice = $('update-notice');
+    const showUpdate = () => { notice.hidden = false; };
+    $('update-reload').addEventListener('click', () => {
+      if ((view === 'home' || buffer || !$('modal').hidden) && !window.confirm('Незавершённый ввод будет потерян. Перезагрузить приложение?')) return;
+      if (!persist()) return;
+      if (registration && registration.waiting) {
+        reloading = true;
+        registration.waiting.postMessage({type:'skipWaiting'});
+      } else location.reload();
+    });
     navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(buffer){toast('Обновление готово. Перезапустите приложение после записи хода.');return;}
-      location.reload();
-    },{once:true});
+      if (reloading) location.reload();
+      else if (hadController) showUpdate();
+      hadController = true;
+    });
     navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})
-      .then(registration=>registration.update())
+      .then(reg => {
+        registration = reg;
+        const check = () => reg.update().catch(error=>console.error('Не удалось проверить обновление:',error));
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdate();
+        reg.addEventListener('updatefound', () => {
+          const worker = reg.installing;
+          if (worker) worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) showUpdate();
+          });
+        });
+        check();
+        setInterval(check, 60000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+      })
       .catch(error=>console.error('Не удалось обновить приложение:',error));
   }
 })();

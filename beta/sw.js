@@ -1,4 +1,4 @@
-const CACHE_NAME = 'darts-beta-cache-2026-11-14-results-panel-v15';
+const CACHE_NAME = 'darts-beta-cache-2026-11-14-results-panel-v16';
 const urlsToCache = [
   './', './index.html', './static/game.js', './static/match-extras.js', './static/match-card.js', './static/script.js', './static/style.css',
   './static/manifest.json', './static/img/icon-192x192.png',
@@ -6,7 +6,10 @@ const urlsToCache = [
   './static/img/ishak2.png', './favicon.ico'
 ];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+});
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'skipWaiting') self.skipWaiting();
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('darts-beta-cache-') && key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim()));

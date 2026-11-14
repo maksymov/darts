@@ -85,7 +85,7 @@
 .tv .donkey-copy p{font-size:13px}
 .tv .leader-gap{font-size:clamp(15px,1.25vw,21px)}
 .tv.game-active .site-header,.tv.game-active .remote-hint{display:none}
-.tv.game-active body{height:100dvh;overflow:hidden}
+.tv.game-active body{height:100vh;height:100dvh;overflow:hidden}
 .tv.game-active main{display:flex;flex:1;flex-direction:column;width:calc(100% - 5vw);max-width:1800px;min-height:0;overflow-y:auto;padding:16px 0}
 .tv-game-toolbar{display:none}
 .tv.game-active .tv-game-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 308px 16px 0}
@@ -103,7 +103,7 @@
 .tv.game-active .turn-label{margin-top:10px}
 .tv.game-active .remaining{font-size:clamp(48px,4vw,72px);line-height:1;margin:4px 0 8px}
 .tv.game-active .player-bottom{align-items:flex-end;flex-wrap:wrap;margin-top:0;padding-top:8px}
-.tv.game-active .game-sidebar{position:fixed;top:16px;right:max(2.5vw,calc((100vw - 1800px)/2));width:292px;height:calc(100dvh - 32px);min-height:0;overflow:visible}
+.tv.game-active .game-sidebar{position:fixed;top:16px;right:max(2.5vw,calc((100vw - 1800px)/2));width:292px;height:calc(100vh - 32px);height:calc(100dvh - 32px);min-height:0;overflow:visible}
 .tv.game-active .game-sidebar .controller{display:flex;height:100%;flex-direction:column;min-height:0;padding:16px}
 .tv.game-active .game-sidebar .controller>.keypad{flex:1;grid-template-rows:repeat(4,minmax(0,1fr));min-height:0}
 .tv.game-active .game-sidebar .controller>.donkey-commentator{flex-shrink:0;margin-top:auto}
@@ -111,7 +111,7 @@
 .tv.game-active .sector-controller .dartboard svg{height:100%;max-height:100%;object-fit:contain}
 .tv.game-active .sector-controller>.donkey-commentator{margin-top:auto}
 .tv.game-active .history{margin-top:16px}
-.tv .dialog{max-height:calc(100dvh - 24px);overscroll-behavior:contain}
+.tv .dialog{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overscroll-behavior:contain}
 .tv .dialog-header{position:sticky;top:-19px;z-index:2;padding-top:8px;background:var(--surface)}
 .tv .dialog-actions{position:sticky;bottom:-19px;z-index:2;padding:10px 0 6px;background:var(--surface)}
 @media(max-width:900px){
@@ -152,7 +152,7 @@
 }
 
 .tv.tv-results .site-header,.tv.tv-results .remote-hint{display:none}
-.tv.tv-results body{height:100dvh;overflow:hidden}
+.tv.tv-results body{height:100vh;height:100dvh;overflow:hidden}
 .tv.tv-results main{display:flex;flex:1;flex-direction:column;width:calc(100% - 5vw);max-width:1800px;min-height:0;overflow-y:auto;padding:16px 0}
 .tv.tv-results .match-top{margin-bottom:16px}
 .tv.tv-results .win-banner{margin-bottom:16px}
@@ -242,4 +242,146 @@
   .tv.tv-results .many-players-layout .donkey-commentator{padding:6px;gap:6px}
   .tv.tv-results .many-players-layout .donkey-portrait{flex-basis:38px;width:38px;height:38px}
   .tv.tv-results .many-players-layout .donkey-copy p{font-size:11px;line-height:1.2}
+}
+.tv.game-active .players-grid.many-players.nine-players,
+.tv.tv-results .many-players-layout .players-grid.many-players.nine-players{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-height:950px), (max-width:1400px){
+.tv.tv-results.nine-players-game main{padding:8px 0}
+.tv.tv-results.nine-players-game .match-top{margin-bottom:8px}
+.tv.tv-results.nine-players-game .match-top .eyebrow{display:none}
+.tv.tv-results.nine-players-game .match-top h1{font-size:20px}
+.tv.tv-results.nine-players-game .match-tools button{min-height:30px;padding:4px 8px}
+.tv.tv-results.nine-players-game .match-tools .icon-button{min-width:30px}
+.tv.tv-results.nine-players-game .win-banner{padding:8px;margin-bottom:8px}
+.tv.tv-results.nine-players-game .win-banner h2{font-size:20px}
+.tv.tv-results.nine-players-game .win-banner p{font-size:12px;line-height:1.3}
+.tv.tv-results.nine-players-game .win-controls{gap:4px}
+.tv.tv-results.nine-players-game .win-controls button{min-height:30px;padding:5px 8px;font-size:12px}
+.tv.tv-results.nine-players-game .players-grid.nine-players{gap:5px}
+.tv.tv-results.nine-players-game .players-grid.nine-players .player-card{padding:3px}
+.tv.tv-results.nine-players-game .players-grid.nine-players .player-title h2{font-size:12px;line-height:1.15}
+.tv.tv-results.nine-players-game .players-grid.nine-players .player-title small{font-size:8px;margin-top:1px}
+.tv.tv-results.nine-players-game .players-grid.nine-players .player-top .icon-button{min-width:22px;min-height:22px;padding:1px;font-size:14px}
+.tv.tv-results.nine-players-game .players-grid.nine-players .turn-label{margin-top:2px;font-size:7px;letter-spacing:.5px}
+.tv.tv-results.nine-players-game .players-grid.nine-players .remaining{font-size:22px;margin:0}
+.tv.tv-results.nine-players-game .players-grid.nine-players .player-bottom{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-top:2px;font-size:7px;line-height:1.15}
+.tv.tv-results.nine-players-game .players-grid.nine-players .leader-gap{font-size:11px}
+.tv.tv-results.nine-players-game .section-head{margin-bottom:3px}
+.tv.tv-results.nine-players-game .section-head h2{font-size:17px}
+.tv.tv-results.nine-players-game .section-head>span{display:none}
+.tv.tv-results.nine-players-game .history-scroll{margin-top:5px}
+.tv.tv-results.nine-players-game .many-players-history th,.tv.tv-results.nine-players-game .many-players-history td{padding:2px;font-size:9px}
+.tv.tv-results.nine-players-game .many-players-history th:not(:first-child){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv.tv-results.nine-players-game .many-players-history td button{min-height:18px;padding:1px 2px;font-size:9px}
+.tv.tv-results.nine-players-game .history-more{min-height:28px;padding:4px 8px;font-size:11px;margin-top:4px}
+.tv.tv-results.nine-players-game .game-sidebar .controller{padding:8px}
+.tv.tv-results.nine-players-game .game-sidebar .controller .eyebrow{margin-bottom:6px;letter-spacing:1px;font-size:9px}
+.tv.tv-results.nine-players-game .game-sidebar .controller h2{font-size:20px}
+.tv.tv-results.nine-players-game .game-sidebar .controller p{font-size:11px;line-height:1.3;margin-top:8px}
+.tv.tv-results.nine-players-game .game-sidebar .controller button{min-height:30px;padding:5px 8px;font-size:12px}
+.tv.tv-results.nine-players-game .game-sidebar .donkey-commentator{padding:6px;gap:6px}
+.tv.tv-results.nine-players-game .game-sidebar .donkey-portrait{flex-basis:38px;width:38px;height:38px}
+.tv.tv-results.nine-players-game .game-sidebar .donkey-copy p{font-size:11px;line-height:1.2}
+}
+@media(min-width:901px) and (max-height:950px), (min-width:901px) and (max-width:1400px){
+  .tv.game-active.nine-players-game .players-grid.nine-players{gap:5px}
+  .tv.game-active.nine-players-game .players-grid.nine-players .player-card{padding:3px}
+  .tv.game-active.nine-players-game .players-grid.nine-players .player-title h2{font-size:12px;line-height:1.15}
+  .tv.game-active.nine-players-game .players-grid.nine-players .player-title small{font-size:8px;margin-top:1px}
+  .tv.game-active.nine-players-game .players-grid.nine-players .player-top .icon-button{min-width:22px;min-height:22px;padding:1px;font-size:14px}
+  .tv.game-active.nine-players-game .players-grid.nine-players .turn-label{margin-top:2px;font-size:7px;letter-spacing:.5px}
+  .tv.game-active.nine-players-game .players-grid.nine-players .remaining{font-size:22px;margin:0}
+  .tv.game-active.nine-players-game .players-grid.nine-players .player-bottom{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding-top:2px;font-size:7px;line-height:1.15}
+  .tv.game-active.nine-players-game .players-grid.nine-players .leader-gap{font-size:11px}
+}
+@media(min-width:901px){
+  .tv.game-active.nine-players-game .history{margin-top:8px}
+  .tv.game-active.nine-players-game .section-head{margin-bottom:3px}
+  .tv.game-active.nine-players-game .section-head h2{font-size:17px}
+  .tv.game-active.nine-players-game .section-head>span{display:none}
+  .tv.game-active.nine-players-game .history-scroll{max-width:100%;margin-top:5px;overflow-x:hidden}
+  .tv.game-active.nine-players-game .many-players-history table{width:100%;min-width:0!important;table-layout:fixed}
+  .tv.game-active.nine-players-game .many-players-history th,.tv.game-active.nine-players-game .many-players-history td{padding:2px;font-size:9px;overflow-wrap:anywhere}
+  .tv.game-active.nine-players-game .many-players-history th:first-child,.tv.game-active.nine-players-game .many-players-history td:first-child{width:32px}
+  .tv.game-active.nine-players-game .many-players-history th:not(:first-child){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tv.game-active.nine-players-game .many-players-history td button{min-width:0;min-height:18px;padding:1px 2px;font-size:9px;white-space:normal}
+  .tv.game-active.nine-players-game .history-more{min-height:28px;padding:4px 8px;font-size:11px;margin-top:4px}
+}
+
+.update-notice{position:fixed;z-index:20;right:16px;bottom:16px;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px);padding:10px 12px;border:1px solid var(--accent);border-radius:12px;background:var(--surface);box-shadow:var(--shadow);font-size:14px}
+.update-notice button{min-height:40px;padding:6px 12px}
+.tv.game-active .players-grid.adaptive-players,
+.tv.tv-results .players-grid.adaptive-players{grid-template-columns:repeat(var(--player-columns,2),minmax(0,1fr))!important;gap:.35rem}
+.tv.game-active .players-grid.adaptive-players .player-card,
+.tv.tv-results .players-grid.adaptive-players .player-card{font-size:var(--player-scale,16px);padding:.35em;border-radius:.75em}
+.tv.game-active .players-grid.adaptive-players .player-top,
+.tv.tv-results .players-grid.adaptive-players .player-top{gap:.2em}
+.tv.game-active .players-grid.adaptive-players .player-title h2,
+.tv.tv-results .players-grid.adaptive-players .player-title h2{font-size:1em;line-height:1.15;letter-spacing:0}
+.tv.game-active .players-grid.adaptive-players .player-title small,
+.tv.tv-results .players-grid.adaptive-players .player-title small{font-size:.7em;margin-top:.1em}
+.tv.game-active .players-grid.adaptive-players .player-top .icon-button,
+.tv.tv-results .players-grid.adaptive-players .player-top .icon-button{min-width:1.6em;min-height:1.6em;padding:.1em;font-size:1em;line-height:1}
+.tv.game-active .players-grid.adaptive-players .turn-label,
+.tv.tv-results .players-grid.adaptive-players .turn-label{font-size:.65em;margin-top:.2em;letter-spacing:.04em}
+.tv.game-active .players-grid.adaptive-players .remaining,
+.tv.tv-results .players-grid.adaptive-players .remaining{font-size:2em;line-height:1;margin:.05em 0;letter-spacing:-.03em}
+.tv.game-active .players-grid.adaptive-players .player-bottom,
+.tv.tv-results .players-grid.adaptive-players .player-bottom{display:flex;align-items:center;flex-wrap:wrap;gap:.3em;padding-top:.2em;font-size:.7em;line-height:1.2}
+.tv.game-active .players-grid.adaptive-players .leader-gap,
+.tv.tv-results .players-grid.adaptive-players .leader-gap{font-size:1.15em}
+.tv.game-active .players-grid.adaptive-players .sector-track,
+.tv.tv-results .players-grid.adaptive-players .sector-track{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:.15em;margin-top:.3em}
+.tv.game-active .players-grid.adaptive-players .sector-step,
+.tv.tv-results .players-grid.adaptive-players .sector-step{min-width:0;height:1.5em;border-radius:.2em;font-size:.55em}
+.tv.game-active .players-grid.adaptive-players .progress-bar,
+.tv.tv-results .players-grid.adaptive-players .progress-bar{margin-bottom:.3em}
+.tv.game-active .many-players-history table,
+.tv.tv-results .many-players-history table{width:100%;min-width:0!important;table-layout:fixed}
+.tv.game-active .many-players-history .history-scroll,
+.tv.tv-results .many-players-history .history-scroll{max-width:100%;overflow-x:hidden}
+.tv.game-active .many-players-history th,
+.tv.game-active .many-players-history td,
+.tv.tv-results .many-players-history th,
+.tv.tv-results .many-players-history td{padding:2px;font-size:10px;overflow-wrap:anywhere}
+.tv.game-active .many-players-history th:first-child,
+.tv.game-active .many-players-history td:first-child{width:32px}
+.tv.game-active .many-players-history th:not(:first-child),
+.tv.tv-results .many-players-history th:not(:first-child){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv.game-active .many-players-history td button,
+.tv.tv-results .many-players-history td button{min-width:0;min-height:22px;padding:2px;font-size:10px;white-space:normal}
+.tv.game-active .many-players-history .history-more,
+.tv.tv-results .many-players-history .history-more{min-height:30px;padding:4px 8px;font-size:11px;margin-top:4px}
+@media(min-width:601px) and (max-width:900px){
+  .tv.game-active .game-layout{display:block;padding-right:calc(29vw + 10px)}
+  .tv.game-active .game-sidebar{position:fixed;top:8px;right:2.5vw;width:29vw;height:calc(100vh - 16px)}
+  .tv.game-active .game-sidebar .controller{height:100%;padding:8px}
+  .tv.game-active .game-sidebar .controller>.keypad{flex:1}
+  .tv.game-active .game-sidebar .controller>.donkey-commentator{margin-top:auto}
+  .tv.game-active .tv-game-toolbar{margin-right:calc(29vw + 10px)}
+}
+@media(max-width:900px){
+  .tv.tv-results .match-top .eyebrow{display:none}
+  .tv.tv-results .match-top h1{font-size:20px}
+  .tv.tv-results .match-tools button{min-height:30px;padding:4px 8px}
+  .tv.tv-results .match-tools .icon-button{min-width:30px}
+}
+@media(min-width:601px) and (max-width:900px){
+  .tv.tv-results .win-banner{flex-direction:row;align-items:center}
+  .tv.tv-results .win-controls{width:auto}
+  .tv.tv-results .win-controls button{flex:initial}
+}
+@media(max-width:600px){
+  .tv.tv-results .game-layout.many-players-layout{grid-template-columns:minmax(0,1fr) minmax(110px,29vw);gap:6px}
+  .tv.tv-results .win-banner{flex-direction:row;align-items:center;gap:4px}
+  .tv.tv-results .win-banner h2{font-size:15px;letter-spacing:0}
+  .tv.tv-results .win-banner p{display:none}
+  .tv.tv-results .win-controls{width:auto;gap:3px}
+  .tv.tv-results .win-controls button,.tv.tv-results .win-controls #match-card-open{flex:initial;min-height:26px;padding:3px 4px;font-size:10px}
+  .tv.tv-results .many-players-layout .controller{padding:6px}
+  .tv.tv-results .many-players-layout .controller .eyebrow{font-size:8px;letter-spacing:.5px;margin-bottom:4px}
+  .tv.tv-results .many-players-layout .controller h2{font-size:15px}
+  .tv.tv-results .many-players-layout .controller p{font-size:10px;line-height:1.2;margin-top:4px}
+  .tv.tv-results .many-players-layout .game-sidebar{gap:6px}
+  .tv.tv-results .many-players-layout .donkey-commentator{min-height:0}
 }
