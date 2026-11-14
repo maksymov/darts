@@ -64,21 +64,35 @@
   function fitPlayers() {
     const grid = document.querySelector('.players-grid');
     if (!grid || !game || !grid.children.length) return;
-    const main = $('main'), history = document.querySelector('.history');
+    const main = $('main');
+    const savedMainScroll = main.scrollTop, savedWindowScroll = window.scrollY;
+    function restoreScroll() {
+      main.scrollTop = savedMainScroll;
+      if (window.scrollY !== savedWindowScroll) window.scrollTo(window.scrollX, savedWindowScroll);
+    }
     grid.style.removeProperty('--player-columns');
     grid.style.removeProperty('--player-scale');
+    grid.style.removeProperty('--player-height');
     const count = grid.children.length;
     grid.classList.remove('adaptive-players');
-    const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom) - 8;
-    if (count <= 4 && grid.getBoundingClientRect().bottom <= available &&
-        (historyExpanded || history.getBoundingClientRect().bottom <= available)) return;
+    grid.classList.add('fill-players');
+    const scrollOffset = window.scrollY + main.scrollTop;
+    const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY) - 8;
+    const height = Math.max(0, available - grid.getBoundingClientRect().top - scrollOffset);
+    if (count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available) {
+      grid.style.setProperty('--player-height', `${height}px`);
+      restoreScroll();
+      return;
+    }
     grid.classList.add('adaptive-players');
     const desired = count === 9 ? 3 : Math.ceil(Math.sqrt(count * 1.6));
     const maxColumns = Math.min(count, 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
     const center = Math.min(desired, maxColumns);
     const columnsToTry = Array.from(new Set([center, center - 1, center + 1, center - 2, center + 2, maxColumns, maxColumns - 1]))
       .filter(columns => columns >= 1 && columns <= maxColumns);
-    const scales = [1, .9, .8, .7, .6, .5, .4, .3];
+    const scales = count === 9
+      ? [3, 2.8, 2.6, 2.4, 2.2, 2, 1.8, 1.6, 1.4, 1.2, 1, .9, .8, .7, .6, .5, .4, .3]
+      : [1, .9, .8, .7, .6, .5, .4, .3];
     let best = null, preferred = null;
     for (const columns of columnsToTry) {
       grid.style.setProperty('--player-columns', columns);
@@ -88,13 +102,12 @@
         const scale = scales[index];
         grid.style.setProperty('--player-scale', `${16 * scale}px`);
         const gridRect = grid.getBoundingClientRect();
-        const historyRect = history.getBoundingClientRect();
-        const cardsFit = gridRect.bottom <= available;
-        const historyFits = cardsFit && (historyExpanded || historyRect.bottom <= available);
-        const score = (historyFits ? 10000 : cardsFit ? 5000 : 0) + scale * 1000 -
-          Math.max(0, gridRect.bottom - available) * 20 -
+        const bottom = gridRect.bottom + window.scrollY + main.scrollTop;
+        const cardsFit = bottom <= available;
+        const score = (cardsFit ? 5000 : 0) + scale * 1000 -
+          Math.max(0, bottom - available) * 20 -
           Math.abs(columns - desired) * 35 - (count % columns ? 10 : 0);
-        return measurements[index] = {columns, scale, score, cardsFit, historyFits};
+        return measurements[index] = {columns, scale, score, cardsFit};
       }
       function largestFit(property) {
         if (!measure(scales.length - 1)[property]) return null;
@@ -106,13 +119,15 @@
         }
         return measure(low);
       }
-      const candidate = largestFit('historyFits') || largestFit('cardsFit') || measure(scales.length - 1);
+      const candidate = largestFit('cardsFit') || measure(scales.length - 1);
       if (!best || candidate.score > best.score) best = candidate;
       if (count === 9 && columns === 3) preferred = candidate;
     }
     if (preferred && preferred.cardsFit) best = preferred;
     grid.style.setProperty('--player-columns', best.columns);
     grid.style.setProperty('--player-scale', `${16 * best.scale}px`);
+    if (best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
+    restoreScroll();
   }
   let resizeTimer;
   window.addEventListener('resize', () => {
