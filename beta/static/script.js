@@ -13,7 +13,6 @@
   try { const saved = JSON.parse(storage.getItem('darts.v2')); if (G.valid(saved)) game = saved; } catch (_) {}
   if (!game) game = G.migrate(storage);
   let view = 'home', buffer = '', historyExpanded = false;
-  let tv = storage.getItem('darts.tv') === 'true';
   let theme = storage.getItem('theme') || 'dark';
   let effects = storage.getItem('darts.effects') !== 'false';
   let commentator = storage.getItem('darts.commentator') === null ? effects : storage.getItem('darts.commentator') !== 'false';
@@ -35,7 +34,6 @@
     document.documentElement.classList.toggle('game-active', view === 'game' && !!game && !G.finished(game));
     document.documentElement.classList.toggle('tv-results', view === 'game' && !!game && G.finished(game));
     document.documentElement.classList.toggle('nine-players-game', view === 'game' && !!game && game.players.length === 9);
-    $('tv-toggle').setAttribute('aria-pressed', String(tv));
     document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
   }
   if (themeMedia.addEventListener) themeMedia.addEventListener('change', applyTheme);
@@ -164,7 +162,7 @@
   function plural(n,a,b,c) { return n%10===1&&n%100!==11?a:n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?b:c; }
   function keypadHTML(inDialog) { return `<div class="keypad" aria-label="Цифровая панель">${['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(v=>`<button ${v==='5'?'id="'+(inDialog?'dialog-five':'key-five')+'"':''} data-action="digit" data-value="${v}" ${v==='clear'||v==='delete'?'class="small-key"':''} aria-label="${v==='clear'?'Очистить ввод':v==='delete'?'Удалить последнюю цифру':v}">${v==='clear'?'Сброс':v==='delete'?'⌫':v}</button>`).join('')}</div>`; }
   function controllerHTML(active) {
-    return `<aside class="controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" ${tv?'readonly':''}></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
+    return `<aside class="controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="none" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" readonly></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
   }
   function sectorControllerHTML(active) {
     return `<aside class="controller sector-controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>По секторам</span></div><div class="dartboard">${dartboardSVG(G.SECTORS[active.progress])}</div><div class="sector-side"><p class="sector-target">Ваша цель <strong>${G.SECTORS[active.progress]===50?'Яблочко · 50':G.SECTORS[active.progress]===25?'Внешний центр · 25':'Сектор '+G.SECTORS[active.progress]}</strong></p><div class="sector-buttons"><button id="sector-hit" class="primary" data-action="hit">✓ Попал! Следующий сектор</button><button data-action="sector-miss">Передать ход →</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}</aside>`;
@@ -209,14 +207,14 @@
   function confirmAction(title,text,action) { openModal(title,`<p>${esc(text)}</p><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="${action}">Да, продолжить</button></div>`,'confirm'); }
   function nameDialog(index,source,pendingPlayer) {
     const p=pendingPlayer||(source==='draft'?draft.players[index]:game.players.find(p=>p.id===index));
-    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
+    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" inputmode="none" readonly value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
   }
   function lettersHTML(lang) { return `<div class="name-keyboard" aria-label="Буквы имени">${(lang==='ru'?'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ':'ABCDEFGHIJKLMNOPQRSTUVWXYZ').split('').map(c=>`<button data-action="letter" data-value="${c}">${c}</button>`).join('')}<button class="wide" data-action="letter" data-value="space">Пробел</button><button class="wide" data-action="letter" data-value="delete">⌫</button><button class="wide" data-action="letter" data-value="clear">Очистить</button><button class="wide" data-action="alphabet">${lang==='ru'?'ABC':'АБВ'}</button></div>`; }
   function numberDialog(title,value,type,data) {
-    openModal(title,`<label class="field-label" for="dialog-number">${type==='custom'?'Стартовый счёт от 1 до 9999':'Очки за ход: от 0 до 180'}</label><label class="score-display"><input id="dialog-number" aria-label="${type==='custom'?'Стартовый счёт':'Исправленный результат'}" inputmode="numeric" maxlength="${type==='custom'?4:3}" value="${value}" ${tv?'readonly':''}></label>${keypadHTML(true)}<div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-number">Сохранить</button></div>${type==='edit'?'<button class="undo-button" data-action="edit-bust">Отметить как перебор</button>':''}`,type,data);
+    openModal(title,`<label class="field-label" for="dialog-number">${type==='custom'?'Стартовый счёт от 1 до 9999':'Очки за ход: от 0 до 180'}</label><label class="score-display"><input id="dialog-number" aria-label="${type==='custom'?'Стартовый счёт':'Исправленный результат'}" inputmode="none" maxlength="${type==='custom'?4:3}" value="${value}" readonly></label>${keypadHTML(true)}<div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-number">Сохранить</button></div>${type==='edit'?'<button class="undo-button" data-action="edit-bust">Отметить как перебор</button>':''}`,type,data);
   }
   function settingsDialog() {
-    openModal('Ваше табло',`<p>Выберите оформление. Управление стрелками доступно в любой теме.</p><span class="field-label">Цветовая схема</span><div class="settings-choices">${[['dark','Тёмная'],['light','Светлая'],['auto','Системная']].map(([v,t])=>`<button data-action="theme" data-value="${v}" class="${theme===v?'selected':''}" aria-pressed="${theme===v}">${t}</button>`).join('')}</div><div class="menu-stack"><button data-action="effects" aria-pressed="${effects}">Анимации и конфетти: ${effects?'вкл.':'выкл.'}</button><button data-action="commentator" aria-pressed="${commentator}">Ишак-комментатор: ${commentator?'вкл.':'выкл.'}</button><button data-action="tv" aria-pressed="${tv}">Режим ТВ: ${tv?'вкл.':'выкл.'}</button></div>`,'settings');
+    openModal('Ваше табло',`<p>Выберите оформление. Управление стрелками доступно в любой теме.</p><span class="field-label">Цветовая схема</span><div class="settings-choices">${[['dark','Тёмная'],['light','Светлая'],['auto','Системная']].map(([v,t])=>`<button data-action="theme" data-value="${v}" class="${theme===v?'selected':''}" aria-pressed="${theme===v}">${t}</button>`).join('')}</div><div class="menu-stack"><button data-action="effects" aria-pressed="${effects}">Анимации и конфетти: ${effects?'вкл.':'выкл.'}</button><button data-action="commentator" aria-pressed="${commentator}">Ишак-комментатор: ${commentator?'вкл.':'выкл.'}</button></div>`,'settings');
   }
   function idleComment(text, player) {
     return {event:'idle',mood:'friendly',label:'У МИШЕНИ',player:player||'',text:text||(player?`${player}, мишень уже в курсе твоих планов. Я пока присматриваюсь.`:'Вы бросайте. Я посмотрю с умным видом.')};
@@ -298,6 +296,17 @@
     let next=input.value;if(value==='clear')next='';else if(value==='delete')next=next.slice(0,-1);else if(next.length<Number(input.maxLength))next=(next==='0'?'':next)+value;
     input.value=next;if($('modal').hidden)buffer=next;
   }
+  function editReadOnlyInput(field, key) {
+    const start=field.selectionStart,end=field.selectionEnd;
+    if(start===null||end===null)return;
+    const previous=Array.from(field.value.slice(0,start)).pop()||'';
+    const next=Array.from(field.value.slice(end))[0]||'';
+    const from=key==='Backspace'&&start===end?start-previous.length:start;
+    const to=key==='Delete'&&start===end?end+next.length:end;
+    const text=key==='Backspace'||key==='Delete'?'':key;
+    if(field.value.length-(to-from)+text.length<=field.maxLength)field.setRangeText(text,from,to,'end');
+    if(field.id==='score-input')buffer=field.value;
+  }
   function startGame() { game=G.create(draft.mode,draft.total,draft.players);comment=idleComment('',game.players[0].name);lastCommentAt=0;view='game';buffer='';historyExpanded=false;persist();render(game.mode==='x01'?'key-five':'sector-hit',false);announce('Партия началась. Ходит '+game.players[0].name); }
   function goHome() { buffer='';view='home';render(game?'resume':'mode-1'); }
   function celebrate() {
@@ -311,7 +320,6 @@
     const action=button.dataset.action,value=button.dataset.value,player=button.dataset.player,index=Number(button.dataset.index);
     if(action==='close'){closeModal();return;}
     if(action==='home'){if(!$('modal').hidden)closeModal();goHome();return;}
-    if(action==='tv'){const key=token(button);tv=!tv;storage.setItem('darts.tv',String(tv));applyTheme();if(modalType==='settings'){settingsDialog();focusTo(key);}else{render(key);}toast(tv?'Системная цифровая клавиатура отключена.':'Системная цифровая клавиатура включена.');return;}
     if(action==='settings'){settingsDialog();return;}
     if(action==='match-card'){openMatchCard();return;}
     if(action==='download-card'){downloadCard();return;}
@@ -319,7 +327,7 @@
     if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));render();settingsDialog();focusTo(token(button));return;}
     if(action==='theme'){theme=value;storage.setItem('theme',theme);applyTheme();settingsDialog();focusTo(token(button));return;}
     if(action==='effects'){effects=!effects;storage.setItem('darts.effects',String(effects));settingsDialog();focusTo(token(button));return;}
-    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для телевизора включите «Режим ТВ». Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
+    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
     if(action==='about'){openModal('Дартс. Ваш домашний клуб.',`<p>Счёт для игр с друзьями, без регистрации. Текущая партия хранится только в этом браузере.</p><div class="menu-stack"><a href="https://github.com/maksymov/darts" target="_blank" rel="noopener">Код проекта на GitHub ↗</a><a href="https://vk.com/maksymov.vlad" target="_blank" rel="noopener">Автор ВКонтакте ↗</a><a href="https://t.me/MaKcuMoB" target="_blank" rel="noopener">Написать автору ↗</a><a href="https://yoomoney.ru/to/410011276146968" target="_blank" rel="noopener">Поддержать проект ↗</a></div>`,'about');return;}
     if(action==='mode'){draft.mode=value;draft.total=Number(button.dataset.total);render(token(button));return;}
     if(action==='custom-total'){numberDialog('Свой стартовый счёт',draft.total,'custom');return;}
@@ -381,6 +389,11 @@
     const editing=input&&!event.target.readOnly;
     if(key==='Tab'&&!$('modal').hidden){const list=controls($('modal')),i=list.indexOf(document.activeElement);if(event.shiftKey&&i<=0){event.preventDefault();list[list.length-1].focus();}else if(!event.shiftKey&&i===list.length-1){event.preventDefault();list[0].focus();}return;}
     if(key==='Escape'||key==='BrowserBack'||key==='GoBack'){event.preventDefault();back();return;}
+    if((event.target.id==='player-name' && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
+       (['score-input','dialog-number'].includes(event.target.id) && (key==='Backspace'||key==='Delete'||/^\d$/.test(key)))) {
+      editReadOnlyInput(event.target,key);
+      event.preventDefault();return;
+    }
     if(key.indexOf('Arrow')===0){if(editing&&(key==='ArrowLeft'||key==='ArrowRight'))return;event.preventDefault();document.documentElement.classList.add('remote-navigation');moveFocus(key);return;}
     if(key==='Enter'){
       if(event.repeat){event.preventDefault();return;}
@@ -388,7 +401,7 @@
       if(event.key!=='Enter'&&event.target.tagName==='BUTTON'){event.preventDefault();event.target.click();}return;
     }
     if(editing)return;
-    if(/^\d$/.test(key)&&(($('modal').hidden&&view==='game'&&game.mode==='x01'&&!G.winner(game))||['custom','edit'].includes(modalType))){event.preventDefault();digit(key);const target=$('modal').hidden?$('score-input'):$('dialog-number');if(target)target.focus();return;}
+    if(/^\d$/.test(key)&&(($('modal').hidden&&view==='game'&&$('score-input'))||['custom','edit'].includes(modalType))){event.preventDefault();digit(key);const target=$('modal').hidden?$('score-input'):$('dialog-number');if(target)target.focus();return;}
     if(key==='Backspace'&&(($('modal').hidden&&view==='game')||['custom','edit'].includes(modalType))){event.preventDefault();digit('delete');}
   });
   document.addEventListener('pointerdown',()=>document.documentElement.classList.remove('remote-navigation'));
