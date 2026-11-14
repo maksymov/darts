@@ -1,4 +1,4 @@
-const CACHE_NAME = 'darts-beta-cache-2026-11-15-sectors-v21';
+const CACHE_NAME = 'darts-beta-cache-2026-11-15-sectors-v22';
 const urlsToCache = [
   './', './index.html', './static/game.js', './static/match-extras.js', './static/match-card.js', './static/script.js', './static/style.css',
   './static/manifest.json', './static/img/icon-192x192.png',
@@ -6,7 +6,7 @@ const urlsToCache = [
   './static/img/ishak2.png', './favicon.ico'
 ];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache.map(url => new Request(url, {cache:'reload'})))));
 });
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'skipWaiting') self.skipWaiting();

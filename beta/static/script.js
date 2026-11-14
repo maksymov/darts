@@ -171,7 +171,7 @@
     const order=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
     const point=(r,a)=>[150+r*Math.cos(a*Math.PI/180),150+r*Math.sin(a*Math.PI/180)];
     const ring=(inner,outer,a,b)=>{const A=point(outer,a),B=point(outer,b),C=point(inner,b),D=point(inner,a);return `M${A} A${outer},${outer} 0 0 1 ${B} L${C} A${inner},${inner} 0 0 0 ${D} Z`;};
-    return `<svg viewBox="0 0 300 300" role="img" aria-label="Мишень, подсвечена цель ${target}"><circle cx="150" cy="150" r="148" fill="#212529" stroke="#495057"/>${order.map((n,i)=>{const a=-99+i*18,b=a+18,selected=n===target,pos=point(134,a+9);return `<path d="${ring(16,119,a,b)}" fill="${selected?'#198754':i%2?'#e9ecef':'#343a40'}" stroke="#212529" stroke-width="1.2"/><path d="${ring(109,119,a,b)}" fill="${selected?'#75b798':i%2?'#dc3545':'#198754'}"/><path d="${ring(66,75,a,b)}" fill="${selected?'#ffc107':i%2?'#dc3545':'#198754'}"/><text x="${pos[0]}" y="${pos[1]+5}" text-anchor="middle" fill="${selected?'#75b798':'#f8f9fa'}" font-size="${selected?'19':'13'}">${n}</text>`;}).join('')}<circle cx="150" cy="150" r="16" fill="${target===25?'#75b798':'#198754'}" stroke="#212529"/><circle cx="150" cy="150" r="7" fill="${target===50?'#ffc107':'#dc3545'}" stroke="#212529"/></svg>`;
+    return `<svg viewBox="0 0 300 300" role="img" aria-label="Мишень, подсвечена цель ${target}"><circle cx="150" cy="150" r="148" fill="#212529" stroke="#495057"/>${order.map((n,i)=>{const a=-99+i*18,b=a+18,selected=n===target,pos=point(134,a+9);return `<path d="${ring(16,119,a,b)}" fill="${selected?'#ffc107':i%2?'#e9ecef':'#343a40'}" stroke="#212529" stroke-width="1.2"/><path d="${ring(109,119,a,b)}" fill="${selected?'#ffc107':i%2?'#dc3545':'#198754'}"/><path d="${ring(66,75,a,b)}" fill="${selected?'#ffc107':i%2?'#dc3545':'#198754'}"/><text x="${pos[0]}" y="${pos[1]+5}" text-anchor="middle" fill="${selected?'#ffc107':'#f8f9fa'}" font-size="${selected?'19':'13'}">${n}</text>`;}).join('')}<circle cx="150" cy="150" r="16" fill="${target===25?'#ffc107':'#198754'}" stroke="#212529"/><circle cx="150" cy="150" r="7" fill="${target===50?'#ffc107':'#dc3545'}" stroke="#212529"/></svg>`;
   }
   function historyHTML() {
     if (!game.turns.length) return '<div class="empty-history">Здесь появятся ваши ходы.<br>Первый бросок — за вами.</div>';
@@ -384,12 +384,14 @@
   document.addEventListener('keydown',event=>{
     if(event.altKey||event.ctrlKey||event.metaKey)return;
     const map={37:'ArrowLeft',38:'ArrowUp',39:'ArrowRight',40:'ArrowDown',13:'Enter',27:'Escape',10009:'BrowserBack',461:'BrowserBack'};
-    const key=event.key==='0'?'0':map[event.keyCode]||event.key||'';
+    const zero=event.key==='0'||event.code==='Numpad0'||event.keyCode===96||(event.keyCode===45&&event.location===3)||
+      (event.keyCode===48&&(!event.key||event.key==='Unidentified'));
+    const key=zero?'0':map[event.keyCode]||event.key||'';
     const input=event.target.tagName==='INPUT';
     const editing=input&&!event.target.readOnly;
     if(key==='Tab'&&!$('modal').hidden){const list=controls($('modal')),i=list.indexOf(document.activeElement);if(event.shiftKey&&i<=0){event.preventDefault();list[list.length-1].focus();}else if(!event.shiftKey&&i===list.length-1){event.preventDefault();list[0].focus();}return;}
     if(key==='Escape'||key==='BrowserBack'||key==='GoBack'){event.preventDefault();back();return;}
-    if((key==='0'||key==='Enter') && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
+    if((key==='0'||key==='Enter') && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
       event.preventDefault();if(!event.repeat)record(0,key==='0'?'miss':'hit');return;
     }
     if((event.target.id==='player-name' && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
