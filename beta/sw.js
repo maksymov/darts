@@ -1,4 +1,4 @@
-const CACHE_NAME = 'darts-beta-cache-2026-11-14-tv-layout-v4';
+const CACHE_NAME = 'darts-beta-cache-2026-11-14-tv-controls-v5';
 const urlsToCache = [
   './', './index.html', './static/game.js', './static/match-extras.js', './static/match-card.js', './static/script.js', './static/style.css',
   './static/manifest.json', './static/img/icon-192x192.png',
