@@ -316,10 +316,6 @@
 .tv.tv-results .players-grid.adaptive-players .player-bottom{display:flex;align-items:center;flex-wrap:wrap;gap:.3em;padding-top:.2em;font-size:.7em;line-height:1.2}
 .tv.game-active .players-grid.adaptive-players .leader-gap,
 .tv.tv-results .players-grid.adaptive-players .leader-gap{font-size:1.15em}
-.tv.game-active .players-grid.adaptive-players .sector-track,
-.tv.tv-results .players-grid.adaptive-players .sector-track{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:.15em;margin-top:.3em}
-.tv.game-active .players-grid.adaptive-players .sector-step,
-.tv.tv-results .players-grid.adaptive-players .sector-step{min-width:0;height:1.5em;border-radius:.2em;font-size:.55em}
 .tv.game-active .players-grid.adaptive-players .progress-bar,
 .tv.tv-results .players-grid.adaptive-players .progress-bar{margin-bottom:.3em}
 .tv.game-active .many-players-history table,
