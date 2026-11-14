@@ -12,8 +12,24 @@ function run() {
   check('Bust does not subtract points; exact finish wins',()=>{
     const g=G.create('x01',40,[players[0]]);G.record(g,60);assert.equal(G.standings(g)[0].remaining,40);
     G.record(g,0,'bust');assert.equal(G.standings(g)[0].remaining,40);
-    G.record(g,40);assert.equal(G.winner(g).id,'p0');assert.throws(()=>G.record(g,0));
+    G.record(g,40);assert.equal(G.winner(g).id,'p0');assert.ok(G.finished(g));assert.throws(()=>G.record(g,0));
     G.undo(g);assert.equal(G.winner(g),undefined);assert.equal(g.activeId,'p0');
+  });
+  check('The winner can finish before the round ends and remaining players get one final turn',()=>{
+    const g=G.create('x01',8,[...players,{name:'Вера'}]);G.record(g,8);
+    assert.equal(G.winner(g).id,'p0');assert.deepEqual(G.pendingFinish(g),['p1','p2']);assert.equal(G.finished(g),false);
+    assert.throws(()=>G.record(g,0));g.finishingRound=true;G.record(g,8);
+    assert.deepEqual(G.pendingFinish(g),['p2']);assert.equal(G.winner(g).id,'p0');assert.equal(G.activeId,'p2');
+    G.record(g,8);assert.equal(G.pendingFinish(g).length,0);assert.equal(G.finished(g),true);assert.equal(G.winner(g).id,'p0');
+  });
+  check('A winner who finishes last in the round ends the game immediately',()=>{
+    const g=G.create('x01',8,[...players,{name:'Вера'}]);G.record(g,0);G.record(g,0);G.record(g,8);
+    assert.equal(G.winner(g).id,'p2');assert.deepEqual(G.pendingFinish(g),[]);assert.equal(G.finished(g),true);
+  });
+  check('Undoing a finish-round turn restores that player to the pending queue',()=>{
+    const g=G.create('x01',8,[...players,{name:'Вера'}]);G.record(g,8);
+    g.finishingRound=true;G.record(g,8);G.undo(g);
+    assert.deepEqual(G.pendingFinish(g),['p1','p2']);assert.equal(g.activeId,'p1');assert.equal(G.finished(g),false);
   });
   check('Invalid input cannot mutate the game',()=>{
     const g=G.create('x01',501,players);for(const n of [-1,181,1.5,NaN,Infinity])assert.throws(()=>G.record(g,n));assert.equal(g.turns.length,0);
