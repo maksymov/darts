@@ -143,6 +143,8 @@
   }
   function gameHTML() {
     const rows = G.standings(game), win = G.winner(game);
+    const winners = G.winners(game), draw = winners.length > 1;
+    const winnerNames = winners.map(p=>p.name).join(', ');
     const complete = G.finished(game), finishingRound = !!win && !complete && game.finishingRound;
     const pendingFinish = G.pendingFinish(game);
     const active = rows.find(p=>p.id===game.activeId);
@@ -154,13 +156,13 @@
       const isActive = !complete && (!win || finishingRound) && p.id === game.activeId, leader = leaders.length === 1 && leaders[0].id === p.id && rows.length > 1;
       const remaining = game.mode === 'x01' ? p.remaining : (G.SECTORS[p.progress] || '✓');
       const gap = game.mode === 'x01' ? p.remaining - best : best - p.progress;
-      const turnLabel = isActive ? '● Ваш ход' : win && win.id === p.id ? 'Победитель' : game.mode === 'sectors' ? 'Следующая цель' : '';
+      const turnLabel = isActive ? '● Ваш ход' : winners.some(w=>w.id===p.id) ? (draw?'Ничья':'Победитель') : game.mode === 'sectors' ? 'Следующая цель' : '';
       return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2 class="${leader?'leader-name':''}">${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</h2></div><button class="icon-button" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}">⋯</button></div>${turnLabel?`<div class="turn-label">${turnLabel}</div>`:''}<div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom"><span>Последний: <strong>${p.last===null?'—':esc(p.last)}</strong></span><span class="leader-gap ${gap?'has-gap':''}">${gap?`${game.mode==='x01'?'+':''}${gap} отстал`:leader?'Лидер':'На равных'}</span></div></article>`;
     }).join('');
     const controller = win && !finishingRound
       ? '<aside class="controller"><div class="eyebrow">ДО НОВОЙ ВСТРЕЧИ У МИШЕНИ</div><h2>Отличная партия.</h2><p class="mode-description">Результаты сохранены. Можно сыграть ещё раз с тем же составом или выбрать новый режим.</p><button class="submit-score" data-action="home">Выбрать игру →</button></aside>'
       : game.mode === 'x01' ? controllerHTML(active) : sectorControllerHTML(active);
-    const winBanner = !win ? '' : `<div class="win-banner"><div><h2>🏆 ${esc(win.name)} — победа!</h2><p>${complete?'Мишень покорена. Хорошая игра.':finishingRound?`Доигрываем круг: ходит ${esc(active.name)}.`:`До конца круга осталось: ${pendingFinish.map(id=>esc(game.players.find(p=>p.id===id).name)).join(', ')}.`}</p></div><div class="win-controls">${complete?`<button id="match-card-open" class="primary" data-action="match-card">Карточка матча ↗</button><button id="rematch" data-action="rematch">Ещё партию</button><button data-action="undo">Отменить ход</button>`:finishingRound?'':`<button class="primary" data-action="continue-round">Доиграть круг · ${pendingFinish.length}</button>`}</div></div>`;
+    const winBanner = !win ? '' : `<div class="win-banner"><div><h2>${draw?`🤝 Ничья: ${esc(winnerNames)}`:`🏆 ${esc(win.name)} — победа!`}</h2><p>${complete?'Мишень покорена. Хорошая игра.':finishingRound?`Доигрываем круг: ходит ${esc(active.name)}.`:`До конца круга осталось: ${pendingFinish.map(id=>esc(game.players.find(p=>p.id===id).name)).join(', ')}.`}</p></div><div class="win-controls">${complete?`<button id="match-card-open" class="primary" data-action="match-card">Карточка матча ↗</button><button id="rematch" data-action="rematch">Ещё партию</button><button data-action="undo">Отменить ход</button>`:finishingRound?'':`<button class="primary" data-action="continue-round">Доиграть круг · ${pendingFinish.length}</button>`}</div></div>`;
     return `<div class="tv-game-toolbar"><h1>${esc(modeName(game))}</h1><div class="tv-game-tools"><button data-action="home">← Назад</button><button data-action="restart">↶ Заново</button><button data-action="shuffle-players" ${game.turns.length||win||rows.length<2?'disabled':''} title="${game.turns.length||win?'Перемешивание доступно только до первого хода':'Перемешать игроков'}">Перемешать</button><button class="primary" data-action="add-match-player">＋ Игрок</button></div></div><div class="match-top"><div><div class="eyebrow"><span class="live-dot"></span> ${complete?'ПАРТИЯ ЗАВЕРШЕНА':'ИГРА ИДЁТ'}</div><div class="match-meta"><h1>${esc(modeName(game))}</h1><span class="pill">${complete?'Финиш':'Круг '+round}</span></div></div><div class="match-tools"><button class="quiet-button" data-action="home">← <span class="new-game-label">Новая игра</span><span class="mobile-menu-label">Меню</span></button><button class="icon-button" data-action="match-menu" aria-label="Меню партии">⋯</button></div></div>${winBanner}<div class="game-layout ${rows.length>4?'many-players-layout':''}"><div class="scoreboard"><div class="players-grid ${rows.length>4?'many-players':''} ${gridClass}">${cards}</div></div><div class="game-sidebar">${controller}${win?commentatorHTML():''}</div><section class="history ${rows.length>4?'many-players-history':''}"><div class="section-head"><h2>История партии</h2><span>Нажмите на ход, чтобы исправить</span></div>${historyHTML()}</section></div>`;
   }
   function plural(n,a,b,c) { return n%10===1&&n%100!==11?a:n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?b:c; }
@@ -226,8 +228,9 @@
   function commentatorHTML() {
     if(!commentator)return '';
     const win=G.winner(game);
-    if(win && (comment.event!=='win'||comment.player!==win.name))comment=E.commentFor(game,comment.text);
-    if(!win && comment.event==='win') {
+    const winners=G.winners(game), resultEvent=winners.length>1?'draw':'win', resultNames=winners.map(p=>p.name).join(', ');
+    if(win && (comment.event!==resultEvent||comment.player!==resultNames))comment=E.commentFor(game,comment.text);
+    if(!win && (comment.event==='win'||comment.event==='draw')) {
       const active=game.players.find(p=>p.id===game.activeId);
       comment=idleComment(`${active.name}, пересчёт принят. Никто ничего не видел.`,active.name);
     }
@@ -237,7 +240,7 @@
     if(!commentator)return;
     const next=E.commentFor(game,comment.text);
     if(!next)return;
-    const urgent=['win','maximum','bust'].includes(next.event);
+    const urgent=['win','draw','maximum','bust'].includes(next.event);
     if(!urgent&&Date.now()-lastCommentAt<6000)return;
     comment=next;lastCommentAt=Date.now();
   }
@@ -249,7 +252,8 @@
   async function openMatchCard() {
     const summary=E.summarize(game);
     if(!summary){toast('Карточка появится после завершения партии.');return;}
-    openModal('Карточка матча',`<div class="match-card-layout"><div class="card-preview"><div id="card-loading" role="status">Рисуем вашу победу…</div><img id="card-image" alt="Карточка матча: победитель ${esc(summary.winner.name)}, ${esc(modeName(game))}" hidden></div><div class="card-details"><div class="eyebrow">ЭТО СТОИТ СОХРАНИТЬ</div><h3>${esc(summary.winner.name)} — победа!</h3><p>${esc(modeName(game))}. Результаты всей компании, лучший момент и награда от ишака — в одной картинке.</p><div class="card-award"><span>НАГРАДА ОТ ИШАКА</span><strong>${esc(summary.award.title)}</strong><p>${esc(summary.award.reason)}</p></div><div class="card-export-actions"><button id="download-card" class="primary" data-action="download-card" disabled>↓ Сохранить PNG</button><button id="share-card" data-action="share-card" disabled>Отправить…</button></div><p id="card-share-note" class="card-export-note">Картинка готовится на вашем устройстве.</p><div class="sr-only">Результаты на момент финиша: ${summary.rows.map(p=>`${esc(p.name)} — ${summary.mode==='x01'?'остаток '+p.remaining:p.progress+' из 22 целей'}`).join('; ')}.</div></div></div>`,'card');
+    const names=summary.winners.map(p=>p.name).join(', '), result=summary.winners.length>1?`Ничья: ${names}`:`${names} — победа!`;
+    openModal('Карточка матча',`<div class="match-card-layout"><div class="card-preview"><div id="card-loading" role="status">Рисуем результаты…</div><img id="card-image" alt="Карточка матча: ${esc(result)}, ${esc(modeName(game))}" hidden></div><div class="card-details"><div class="eyebrow">ЭТО СТОИТ СОХРАНИТЬ</div><h3>${esc(result)}</h3><p>${esc(modeName(game))}. Результаты всей компании, лучший момент и награда от ишака — в одной картинке.</p><div class="card-award"><span>НАГРАДА ОТ ИШАКА</span><strong>${esc(summary.award.title)}</strong><p>${esc(summary.award.reason)}</p></div><div class="card-export-actions"><button id="download-card" class="primary" data-action="download-card" disabled>↓ Сохранить PNG</button><button id="share-card" data-action="share-card" disabled>Отправить…</button></div><p id="card-share-note" class="card-export-note">Картинка готовится на вашем устройстве.</p><div class="sr-only">Результаты на момент открытия карточки: ${summary.rows.map(p=>`${esc(p.name)} — ${summary.mode==='x01'?'остаток '+p.remaining:p.progress+' из 22 целей'}`).join('; ')}.</div></div></div>`,'card');
     const request=cardRequest;
     try {
       const result=await window.DartsMatchCard.render(summary);
@@ -290,7 +294,8 @@
       const previousWinner=G.winner(game),p=game.players.find(p=>p.id===game.activeId);const busted=game.mode==='x01'&&(kind==='bust'||score>G.standings(game).find(row=>row.id===p.id).remaining);G.record(game,score,kind);buffer='';persist();
       const win=G.winner(game),complete=G.finished(game);if(!previousWinner)updateComment();render(complete?'match-card-open':win?(game.finishingRound?'key-five':'continue-round'):game.mode==='x01'?'key-five':'sector-hit',false);
       const next=game.players.find(p=>p.id===game.activeId);
-      announce(complete?`${win.name} побеждает! Круг доигран.`:win?previousWinner?`Ход записан. Осталось игроков: ${G.pendingFinish(game).length}.`:`${win.name} побеждает! Осталось доиграть круг.`:kind==='hit'?`Сектор закрыт. Следующая цель: ${G.SECTORS[G.standings(game).find(row=>row.id===p.id).progress]}.`:`Ход записан. Сейчас ходит ${next.name}.`);
+      const winners=G.winners(game), result=winners.length>1?`Ничья: ${winners.map(w=>w.name).join(', ')}.`:win?`${win.name} побеждает!`:'';
+      announce(complete?`${result} Партия завершена.`:win?previousWinner?`${result} Осталось игроков: ${G.pendingFinish(game).length}.`:`${result} Осталось доиграть круг.`:kind==='hit'?`Сектор закрыт. Следующая цель: ${G.SECTORS[G.standings(game).find(row=>row.id===p.id).progress]}.`:`Ход записан. Сейчас ходит ${next.name}.`);
       if(win&&!previousWinner)celebrate();else if(!win&&!busted&&kind!=='miss')react(score);
       if(busted)toast(`${p.name}: перебор. Остаток не изменился.`);
     } catch(error) { toast(error.message); }
@@ -363,7 +368,7 @@
     if(action==='shuffle-players'){if(game.turns.length||G.winner(game)){toast('Перемешивание доступно только до первого хода.');return;}if(game.players.length>1){const original=game.players.map(p=>p.id);do{for(let i=game.players.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[game.players[i],game.players[j]]=[game.players[j],game.players[i]];}}while(game.players.every((p,i)=>p.id===original[i]));game.activeId=game.players[0].id;comment=idleComment('',game.players[0].name);persist();render(token(button));announce('Первым ходит '+game.players[0].name);}return;}
     if(action==='player-menu'){const p=game.players.find(p=>p.id===player);openModal(p.name,`<div class="menu-stack"><button data-action="rename" data-player="${player}">✎ Имя и аватар</button><button data-action="move" data-player="${player}" data-value="-1" ${game.players[0].id===player?'disabled':''}>← Раньше в очереди</button><button data-action="move" data-player="${player}" data-value="1" ${game.players[game.players.length-1].id===player?'disabled':''}>Позже в очереди →</button><button class="danger" data-action="remove-player" data-player="${player}" ${game.players.length===1?'disabled':''}>Убрать игрока из партии</button></div>`,'player-menu',{player});return;}
     if(action==='rename'){nameDialog(player,'game');return;}
-    if(action==='move'){const from=game.players.findIndex(p=>p.id===player),to=from+Number(value);if(to>=0&&to<game.players.length)game.players.splice(to,0,game.players.splice(from,1)[0]);persist();closeModal();render(returnFocus);return;}
+    if(action==='move'){const from=game.players.findIndex(p=>p.id===player),to=from+Number(value);if(to>=0&&to<game.players.length){game.players.splice(to,0,game.players.splice(from,1)[0]);if(!game.turns.length&&!G.winner(game)){game.activeId=game.players[0].id;comment=idleComment('',game.players[0].name);}}persist();closeModal();render(returnFocus);return;}
     if(action==='remove-player'){const p=game.players.find(p=>p.id===player);confirmAction('Убрать игрока?',`Результаты ${p.name} будут удалены из этой партии.`,'confirm-remove');modalData={player};return;}
     if(action==='confirm-remove'){const id=modalData.player;if(game.players.length>1){const next=game.players[(game.players.findIndex(p=>p.id===id)+1)%game.players.length].id;game.players=game.players.filter(p=>p.id!==id);game.turns=game.turns.filter(t=>t.playerId!==id);if(game.activeId===id)game.activeId=next;G.reconcileFinish(game);persist();}closeModal();render(game.mode==='x01'?'key-five':'sector-hit');return;}
     if(action==='restart'){confirmAction('Начать заново?','Очки и история этой партии будут сброшены. Состав игроков сохранится.','confirm-restart');return;}

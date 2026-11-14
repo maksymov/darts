@@ -60,31 +60,33 @@
     const dateText=Number.isFinite(date.getTime())?date.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}):'';
     text(ctx,mode,72,159,20,C.accent,500,700);
     text(ctx,dateText,650,159,20,C.muted,358);
-    text(ctx,'ПОБЕДИТЕЛЬ МАТЧА',72,249,21,C.accent,850,700);
+    const draw=summary.winners.length>1;
+    text(ctx,draw?'НИЧЬЯ':'ПОБЕДИТЕЛЬ МАТЧА',72,249,21,C.accent,850,700);
+    const winnerNames=summary.winners.map(p=>p.name).join(' · ');
     let winnerSize=90;
-    while(winnerSize>44){font(ctx,winnerSize,700);if(ctx.measureText(summary.winner.name).width<=936)break;winnerSize-=2;}
-    text(ctx,summary.winner.name,72,356,winnerSize,C.ink,936,700);
+    while(winnerSize>44){font(ctx,winnerSize,700);if(ctx.measureText(winnerNames).width<=936)break;winnerSize-=2;}
+    text(ctx,winnerNames,72,356,winnerSize,C.ink,936,700);
     text(ctx,'Мишень покорена. Хорошая игра.',76,411,28,C.muted,900);
     box(ctx,72,459,454,134,C.panel);box(ctx,546,459,462,134,C.panel);
     text(ctx,summary.mode==='x01'?'ЛУЧШИЙ ЗАСЧИТАННЫЙ ХОД':'ЦЕЛИ ПОБЕДИТЕЛЯ',96,491,15,C.muted,406,700);
     text(ctx,summary.mode==='x01'?summary.best:'22 / 22',96,544,48,C.accent,406,700);
     const bestNames=summary.bestPlayers.length>2?summary.bestPlayers.slice(0,2).join(', ')+' и ещё '+(summary.bestPlayers.length-2):summary.bestPlayers.join(' · ');
     text(ctx,summary.mode==='x01'?bestNames:'От единицы до яблочка',96,574,18,C.muted,406);
-    text(ctx,summary.mode==='x01'?'ХОДОВ У ПОБЕДИТЕЛЯ':'ИГРОКОВ У МИШЕНИ',570,491,15,C.muted,414,700);
-    text(ctx,summary.mode==='x01'?summary.winner.visits:summary.rows.length,570,548,48,C.ink,414,700);
-    text(ctx,summary.mode==='x01'?'Включая промахи и переборы':'Победила хорошая компания',570,574,18,C.muted,414);
+    text(ctx,draw?'ИГРОКОВ ВНИЧЬЮ':summary.mode==='x01'?'ХОДОВ У ПОБЕДИТЕЛЯ':'ИГРОКОВ У МИШЕНИ',570,491,15,C.muted,414,700);
+    text(ctx,draw?summary.winners.length:summary.mode==='x01'?summary.winner.visits:summary.rows.length,570,548,48,C.ink,414,700);
+    text(ctx,draw?'Все закончили с нулём':summary.mode==='x01'?'Включая промахи и переборы':'Победила хорошая компания',570,574,18,C.muted,414);
     text(ctx,'ИТОГИ ПАРТИИ',72,646,19,C.muted,600,700);
     ctx.textAlign='right';text(ctx,summary.mode==='x01'?'ОСТАТОК':'ЗАКРЫТО ЦЕЛЕЙ',1008,646,16,C.muted,280,700);ctx.textAlign='left';
     let y=677;
     summary.rows.forEach(row=>{
-      if(row.id===summary.winner.id)box(ctx,72,y-5,936,74,C.panel,12);
-      const champion=row.id===summary.winner.id;
+      const champion=summary.winners.some(p=>p.id===row.id);
+      if(champion)box(ctx,72,y-5,936,74,C.panel,12);
       text(ctx,champion?'★':'·',94,y+43,29,champion?C.accent:C.muted,30,700);
       text(ctx,row.name,139,y+43,29,champion?C.accent:C.ink,605,champion?700:400);
       ctx.textAlign='right';text(ctx,summary.mode==='x01'?row.remaining:row.progress+' / 22',984,y+43,32,champion?C.accent:C.ink,220,700);ctx.textAlign='left';
       y+=82;
     });
-    text(ctx,'На момент победного хода',72,y+18,18,C.muted,900);
+    text(ctx,'Результаты на момент открытия карточки',72,y+18,18,C.muted,900);
     const awardY=Math.max(y+52,height-310);
     box(ctx,72,awardY,936,220,C.panel);
     text(ctx,'НАГРАДА ОТ ИШАКА',96,awardY+36,16,C.amber,710,700);

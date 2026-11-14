@@ -24,6 +24,13 @@ function run() {
   check('An unfinished game cannot produce a winner card',()=>{
     assert.equal(E.summarize(G.create('x01',501,players)),null);
   });
+  check('Draw commentary and card include everyone finishing on zero',()=>{
+    const g=G.create('x01',8,[...players,{name:'Вера'}]);G.record(g,8);g.finishingRound=true;G.record(g,8);G.record(g,0);
+    const s=E.summarize(g);assert.deepEqual(s.winners.map(p=>p.name),['Аня','Борис']);
+    assert.equal(s.award.title,'На равных');assert.equal(E.eventFor(g),'draw');
+    assert.match(E.commentFor(g).text,/Аня, Борис/);
+    G.edit(g,1,0);assert.equal(E.summarize(g).winners.length,1);assert.equal(E.eventFor(g),'win');
+  });
   check('A new leader is detected after a full opening round',()=>{
     const g=G.create('x01',501,players);G.record(g,60);G.record(g,90);G.record(g,60);assert.equal(E.eventFor(g),'lead');
   });

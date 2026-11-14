@@ -6,6 +6,7 @@
   'use strict';
   const LINES = {
     win: { mood: 'proud', label: 'ГОРДИТСЯ', lines: ['{player}, мишень покорена. Скромность можешь выключить.', '{player}, вот это финиш! Остальным — тренировать удивлённое лицо.', '{player}, записываю в легенды. Автографы после игры, пожалуйста.'] },
+    draw: { mood: 'amazed', label: 'ВИДИТ НИЧЬЮ', lines: ['{player}, делите славу честно. Мишень уже устала выбирать фаворита.', '{player}, вот это ничья! Корону придётся передавать по очереди.'] },
     maximum: { mood: 'amazed', label: 'ПОТЕРЯЛ ДАР РЕЧИ', lines: ['{player}, сто восемьдесят! Уши встали по стойке смирно.', '{player}, три дротика — три попадания. Мишень уже просит тайм-аут.'] },
     big: { mood: 'amazed', label: 'ВПЕЧАТЛЁН', lines: ['{player}, мишень, кажется, только что передумала спорить.', '{player}, вот это заход! Даже мои уши аплодируют.', '{player}, красиво. Подозрительно красиво. Проверю мишень на сговор.'] },
     hundred: { mood: 'happy', label: 'ОДОБРЯЕТ', lines: ['{player}, сотня есть. Главное — не рассказывай, что случайно.', '{player}, плечи расправил? Мишень уже заметила.', '{player}, одобряю. Но корону пока не выносил.'] },
@@ -49,6 +50,7 @@
 
   function eventFor(game) {
     if (!game.turns.length) return null;
+    if (G.winners(game).length > 1) return 'draw';
     if (G.winner(game)) return 'win';
     const last = game.turns[game.turns.length - 1];
     const row = G.standings(game).find(p => p.id === last.playerId);
@@ -76,7 +78,7 @@
     if (!event) return null;
     const entry = LINES[event];
     const id = event === 'win' ? G.winner(game).id : game.turns[game.turns.length - 1].playerId;
-    const player = game.players.find(p => p.id === id).name;
+    const player = event === 'draw' ? G.winners(game).map(p => p.name).join(', ') : game.players.find(p => p.id === id).name;
     let i = game.turns.length % entry.lines.length;
     let text = entry.lines[i].replace('{player}', player);
     if (text === previousText) {
@@ -91,16 +93,21 @@
     if (!win) return null;
     const rows = analyze(game);
     const champion = rows.find(p => p.id === win.id);
+    const winners = G.winners(game).map(p => rows.find(row => row.id === p.id));
     const best = Math.max(...rows.map(p => p.best));
     const bestPlayers = best > 0 ? rows.filter(p => p.best === best).map(p => p.name) : [];
     let award = { title: 'Мишень одобряет', reason: 'Дошёл до нуля. Забрал победу.', quote: 'Я бы похлопал, но у меня копыта.' };
-    if (game.mode === 'sectors') award = { title: 'Коллекционер секторов', reason: 'Все 22 цели закрыты — от 1 до 50.', quote: 'Всё собрал. Даже яблочко не оставил.' };
+    if (winners.length > 1) award = { title: 'На равных', reason: 'Несколько игроков закончили круг с нулём.', quote: 'Мишень попросила ничью. Я поддержал.' };
+    else if (game.mode === 'sectors') award = { title: 'Коллекционер секторов', reason: 'Все 22 цели закрыты — от 1 до 50.', quote: 'Всё собрал. Даже яблочко не оставил.' };
     else if (champion.best === 180) award = { title: 'Повелитель двадцаток', reason: '180 за ход и победа в партии.', quote: 'Уши до сих пор стоят по стойке смирно.' };
     else if (champion.busts >= 2) award = { title: 'Упрямство — тоже стратегия', reason: 'Переборов: ' + champion.busts + '. Но победа всё равно ваша.', quote: 'Сначала разгон. Потом точность. План сработал.' };
     else if (champion.misses >= 2) award = { title: 'Долгая пристрелка', reason: 'Нулевых ходов: ' + champion.misses + '. Финал — победный.', quote: 'Я же говорил: это была разведка.' };
     else if (champion.best >= 100) award = { title: 'Сотня в кармане', reason: 'Лучший ход победителя — ' + champion.best + ' очков.', quote: 'Скромность можно выключить. Есть за что.' };
-    const sorted = rows.slice().sort((a, b) => a.id === win.id ? -1 : b.id === win.id ? 1 : game.mode === 'x01' ? a.remaining - b.remaining : b.progress - a.progress);
-    return { mode: game.mode, total: game.total, createdAt: game.createdAt, winner: champion, rows: sorted, best, bestPlayers, award };
+    const sorted = rows.slice().sort((a, b) => {
+      const aWinner = winners.some(p => p.id === a.id), bWinner = winners.some(p => p.id === b.id);
+      return aWinner !== bWinner ? (aWinner ? -1 : 1) : game.mode === 'x01' ? a.remaining - b.remaining : b.progress - a.progress;
+    });
+    return { mode: game.mode, total: game.total, createdAt: game.createdAt, winner: champion, winners, rows: sorted, best, bestPlayers, award };
   }
   return { analyze, eventFor, commentFor, summarize };
 });

@@ -54,6 +54,12 @@
     const found = findWinner(game);
     return found && game.players.find(p => p.id === found.id);
   }
+  function winners(game) {
+    const first = winner(game);
+    if (!first) return [];
+    if (game.mode !== 'x01') return [first];
+    return standings(game).filter(p => p.remaining === 0);
+  }
   function pendingFinish(game) {
     return Array.isArray(game.finishQueue) ? game.finishQueue.slice() : [];
   }
@@ -180,5 +186,5 @@
       Array.isArray(game.players) && game.players.length > 0 && game.players.every(p => p && typeof p.id === 'string' && typeof p.name === 'string') &&
       game.players.some(p => p.id === game.activeId) && Array.isArray(game.turns) && game.turns.every(t => t && Number.isFinite(t.score) && t.score >= 0 && game.players.some(p => p.id === t.playerId));
   }
-  return { SECTORS, AVATARS, create, standings, winner, pendingFinish, finished, record, undo, edit, reconcileFinish, migrate, valid };
+  return { SECTORS, AVATARS, create, standings, winner, winners, pendingFinish, finished, record, undo, edit, reconcileFinish, migrate, valid };
 });
