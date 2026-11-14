@@ -310,5 +310,13 @@
   // Preserve current state before the browser or the device goes into the background.
   document.addEventListener('visibilitychange',()=>{if(document.hidden)persist();});
   applyTheme();render();if(tv)focusTo(game?'resume':'mode-1');if(game)persist();
-  if('serviceWorker' in navigator && !['localhost','127.0.0.1','::1'].includes(location.hostname)) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  if('serviceWorker' in navigator && (location.protocol==='https:'||['localhost','127.0.0.1','::1'].includes(location.hostname))) {
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(buffer){toast('Обновление готово. Перезапустите приложение после записи хода.');return;}
+      location.reload();
+    },{once:true});
+    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'})
+      .then(registration=>registration.update())
+      .catch(error=>console.error('Не удалось обновить приложение:',error));
+  }
 })();
