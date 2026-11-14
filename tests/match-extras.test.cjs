@@ -6,7 +6,7 @@ function run() {
   function check(name,fn){fn();count++;}
   const players=[{name:'Аня'},{name:'Борис'}];
   check('Winning with eight points gets congratulations, not a low-score joke',()=>{
-    const g=G.create('x01',8,players);G.record(g,8);assert.equal(E.eventFor(g),'win');assert.equal(E.commentFor(g).player,'Аня');
+    const g=G.create('x01',8,players);G.record(g,8);const comment=E.commentFor(g);assert.equal(E.eventFor(g),'win');assert.equal(comment.player,'Аня');assert.match(comment.text,/Аня/);assert.doesNotMatch(comment.text,/\{player\}/);
   });
   check('An overshoot and explicit bust are classified before big-score or miss reactions',()=>{
     const g=G.create('x01',40,players);G.record(g,180);assert.equal(E.eventFor(g),'bust');G.record(g,0,'bust');assert.equal(E.eventFor(g),'bust');

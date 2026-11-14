@@ -17,7 +17,7 @@
   let theme = storage.getItem('theme') || 'dark';
   let effects = storage.getItem('darts.effects') !== 'false';
   let commentator = storage.getItem('darts.commentator') === null ? effects : storage.getItem('darts.commentator') !== 'false';
-  let comment = idleComment(), lastCommentAt = 0, cardRequest = 0, cardExport = null;
+  let comment = idleComment('', game ? game.players.find(p=>p.id===game.activeId).name : ''), lastCommentAt = 0, cardRequest = 0, cardExport = null;
   let draft = { mode: 'x01', total: 501, players: game ? game.players.map(p => ({ name:p.name, avatar:p.avatar })) : [{name:'Игрок 1',avatar:'🎯'},{name:'Игрок 2',avatar:'⚡'}] };
   let modalType = '', modalData = {}, returnFocus = '', toastTimer;
   const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
@@ -28,17 +28,21 @@
   function applyTheme() {
     document.documentElement.dataset.theme = theme === 'auto' ? (themeMedia.matches ? 'dark' : 'light') : theme;
     document.documentElement.classList.toggle('tv', tv);
+    document.documentElement.classList.toggle('game-active', view === 'game' && !!game && !G.winner(game));
     document.documentElement.classList.toggle('remote-navigation', tv);
     $('tv-toggle').setAttribute('aria-pressed', String(tv));
-    document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#151916' : '#f3f2e9';
+    document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
   }
   if (themeMedia.addEventListener) themeMedia.addEventListener('change', applyTheme);
   function token(el) { return el && (el.id || [el.dataset.action,el.dataset.player,el.dataset.value,el.dataset.index].join('|')); }
   function controls(root) { return Array.from((root || document).querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),[tabindex="0"]')).filter(el => el.getClientRects().length && !el.closest('[hidden]')); }
-  function focusTo(key) {
+  function focusTo(key, scroll) {
     const root = $('modal').hidden ? document : $('modal');
     const target = controls(root).find(el => token(el) === key) || controls(root)[0];
-    if (target) { target.focus({preventScroll:true}); target.scrollIntoView({block:'nearest',inline:'nearest'}); }
+    if (target) {
+      target.focus({preventScroll:true});
+      if (scroll !== false) target.scrollIntoView({block:'nearest',inline:'nearest'});
+    }
   }
   function toast(message) {
     $('toast').textContent = message; $('toast').classList.add('visible');
@@ -46,10 +50,10 @@
   }
   function announce(message) { $('announcement').textContent = message; }
   function modeName(g) { return g.mode === 'sectors' ? 'По секторам' : String(g.total) + ' · X01'; }
-  function render(focus) {
+  function render(focus, scrollFocus) {
     $('main').innerHTML = view === 'home' ? homeHTML() : gameHTML();
     applyTheme();
-    if (focus) focusTo(focus);
+    if (focus) focusTo(focus, scrollFocus);
   }
   function homeHTML() {
     const resume = game ? `<div class="resume-banner"><span class="avatar" aria-hidden="true">${G.winner(game) ? '🏆' : '↗'}</span><div><strong>${G.winner(game) ? 'Последняя партия' : 'Ваша партия ждёт'}</strong><p>${esc(modeName(game))} · ${game.players.length} ${plural(game.players.length,'игрок','игрока','игроков')} · ${game.turns.length} ${game.mode==='sectors'?plural(game.turns.length,'событие','события','событий'):plural(game.turns.length,'ход','хода','ходов')}</p></div><button id="resume" class="primary" data-action="resume">${G.winner(game) ? 'Посмотреть итог' : 'Продолжить игру'} →</button></div>` : '';
@@ -62,26 +66,30 @@
     const best = game.mode==='x01' ? Math.min(...rows.map(p=>p.remaining)) : Math.max(...rows.map(p=>p.progress));
     const leaders = rows.filter(p=>(game.mode==='x01'?p.remaining:p.progress)===best);
     const round = active ? active.visits+1 : 1;
-    return `<div class="match-top"><div><div class="eyebrow"><span class="live-dot"></span> ${win?'ПАРТИЯ ЗАВЕРШЕНА':'ИГРА ИДЁТ'}</div><div class="match-meta"><h1>${esc(modeName(game))}</h1><span class="pill">${win?'Финиш':'Круг '+round}</span></div></div><div class="match-tools"><button class="quiet-button" data-action="home">← <span class="new-game-label">Новая игра</span><span class="mobile-menu-label">Меню</span></button><button class="icon-button" data-action="match-menu" aria-label="Меню партии">⋯</button></div></div>${win?`<div class="win-banner"><div><h2>🏆 ${esc(win.name)} — победа!</h2><p>Мишень покорена. Хорошая игра!</p></div><div class="win-controls"><button id="match-card-open" class="primary" data-action="match-card">Карточка матча ↗</button><button id="rematch" data-action="rematch">Ещё партию</button><button data-action="undo">Отменить ход</button></div></div>`:''}<div class="game-layout"><div class="scoreboard"><div class="players-grid ${rows.length>4?'many-players':''}">${rows.map(p=>{
-      const isActive=!win&&p.id===game.activeId,leader=leaders.length===1&&leaders[0].id===p.id&&rows.length>1;
-      const remaining=game.mode==='x01'?p.remaining:(G.SECTORS[p.progress]||'✓');
-      const gap=game.mode==='x01'?p.remaining-best:best-p.progress;
-      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2>${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</h2><small>${p.visits} ${plural(p.visits,'ход','хода','ходов')}</small></div><button class="icon-button" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}">⋯</button></div><div class="turn-label">${isActive?'● Ваш ход':win&&win.id===p.id?'Победитель':game.mode==='x01'?'Осталось очков':'Следующая цель'}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom"><span>Последний: <strong>${p.last===null?'—':esc(p.last)}</strong></span><span>${gap?`${game.mode==='x01'?'+':''}${gap} ${game.mode==='x01'?'до лидера':'до лидера'}`:leader?'Лидер':'На равных'}</span></div>${game.mode==='sectors'?`<div class="sector-track" aria-label="Прогресс по секторам">${G.SECTORS.map((s,i)=>`<span class="sector-step ${i<p.progress?'done':i===p.progress?'current':''}">${s}</span>`).join('')}</div>`:''}</article>`;
-    }).join('')}</div>${commentatorHTML()}</div>${win?'<aside class="controller"><div class="eyebrow">ДО НОВОЙ ВСТРЕЧИ У МИШЕНИ</div><h2>Отличная партия.</h2><p class="mode-description">Результаты сохранены. Можно сыграть ещё раз с тем же составом или выбрать новый режим.</p><button class="submit-score" data-action="home">Выбрать игру →</button></aside>':game.mode==='x01'?controllerHTML(active):sectorControllerHTML(active)}<section class="history"><div class="section-head"><h2>История партии</h2><span>Нажмите на ход, чтобы исправить</span></div>${historyHTML()}</section></div>`;
+    const cards = rows.map(p => {
+      const isActive = !win && p.id === game.activeId, leader = leaders.length === 1 && leaders[0].id === p.id && rows.length > 1;
+      const remaining = game.mode === 'x01' ? p.remaining : (G.SECTORS[p.progress] || '✓');
+      const gap = game.mode === 'x01' ? p.remaining - best : best - p.progress;
+      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2>${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</h2><small>${p.visits} ${plural(p.visits,'ход','хода','ходов')}</small></div><button class="icon-button" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}">⋯</button></div><div class="turn-label">${isActive?'● Ваш ход':win&&win.id===p.id?'Победитель':game.mode==='x01'?'Осталось очков':'Следующая цель'}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom"><span>Последний: <strong>${p.last===null?'—':esc(p.last)}</strong></span><span class="leader-gap ${gap?'has-gap':''}">${gap?`${game.mode==='x01'?'+':''}${gap} до лидера`:leader?'Лидер':'На равных'}</span></div>${game.mode==='sectors'?`<div class="sector-track" aria-label="Прогресс по секторам">${G.SECTORS.map((s,i)=>`<span class="sector-step ${i<p.progress?'done':i===p.progress?'current':''}">${s}</span>`).join('')}</div>`:''}</article>`;
+    }).join('');
+    const controller = win
+      ? '<aside class="controller"><div class="eyebrow">ДО НОВОЙ ВСТРЕЧИ У МИШЕНИ</div><h2>Отличная партия.</h2><p class="mode-description">Результаты сохранены. Можно сыграть ещё раз с тем же составом или выбрать новый режим.</p><button class="submit-score" data-action="home">Выбрать игру →</button></aside>'
+      : game.mode === 'x01' ? controllerHTML(active) : sectorControllerHTML(active);
+    return `<div class="match-top"><div><div class="eyebrow"><span class="live-dot"></span> ${win?'ПАРТИЯ ЗАВЕРШЕНА':'ИГРА ИДЁТ'}</div><div class="match-meta"><h1>${esc(modeName(game))}</h1><span class="pill">${win?'Финиш':'Круг '+round}</span></div></div><div class="match-tools"><button class="quiet-button" data-action="home">← <span class="new-game-label">Новая игра</span><span class="mobile-menu-label">Меню</span></button><button class="icon-button" data-action="match-menu" aria-label="Меню партии">⋯</button></div></div>${win?`<div class="win-banner"><div><h2>🏆 ${esc(win.name)} — победа!</h2><p>Мишень покорена. Хорошая игра!</p></div><div class="win-controls"><button id="match-card-open" class="primary" data-action="match-card">Карточка матча ↗</button><button id="rematch" data-action="rematch">Ещё партию</button><button data-action="undo">Отменить ход</button></div></div>`:''}<div class="game-layout"><div class="scoreboard"><div class="players-grid ${rows.length>4?'many-players':''}">${cards}</div></div><div class="game-sidebar">${controller}${win?commentatorHTML():''}</div><section class="history"><div class="section-head"><h2>История партии</h2><span>Нажмите на ход, чтобы исправить</span></div>${historyHTML()}</section></div>`;
   }
   function plural(n,a,b,c) { return n%10===1&&n%100!==11?a:n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?b:c; }
   function keypadHTML(inDialog) { return `<div class="keypad" aria-label="Цифровая панель">${['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(v=>`<button ${v==='5'?'id="'+(inDialog?'dialog-five':'key-five')+'"':''} data-action="digit" data-value="${v}" ${v==='clear'||v==='delete'?'class="small-key"':''} aria-label="${v==='clear'?'Очистить ввод':v==='delete'?'Удалить последнюю цифру':v}">${v==='clear'?'Сброс':v==='delete'?'⌫':v}</button>`).join('')}</div>`; }
   function controllerHTML(active) {
-    return `<aside class="controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" ${tv?'readonly':''}></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button><div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
+    return `<aside class="controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" ${tv?'readonly':''}></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
   }
   function sectorControllerHTML(active) {
-    return `<aside class="controller sector-controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>По секторам</span></div><div class="dartboard">${dartboardSVG(G.SECTORS[active.progress])}</div><div class="sector-side"><p class="sector-target">Ваша цель <strong>${G.SECTORS[active.progress]===50?'Яблочко · 50':G.SECTORS[active.progress]===25?'Внешний центр · 25':'Сектор '+G.SECTORS[active.progress]}</strong></p><div class="sector-buttons"><button id="sector-hit" class="primary" data-action="hit">✓ Попал! Следующий сектор</button><button data-action="sector-miss">Передать ход →</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div></aside>`;
+    return `<aside class="controller sector-controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>По секторам</span></div><div class="dartboard">${dartboardSVG(G.SECTORS[active.progress])}</div><div class="sector-side"><p class="sector-target">Ваша цель <strong>${G.SECTORS[active.progress]===50?'Яблочко · 50':G.SECTORS[active.progress]===25?'Внешний центр · 25':'Сектор '+G.SECTORS[active.progress]}</strong></p><div class="sector-buttons"><button id="sector-hit" class="primary" data-action="hit">✓ Попал! Следующий сектор</button><button data-action="sector-miss">Передать ход →</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}</aside>`;
   }
   function dartboardSVG(target) {
     const order=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
     const point=(r,a)=>[150+r*Math.cos(a*Math.PI/180),150+r*Math.sin(a*Math.PI/180)];
     const ring=(inner,outer,a,b)=>{const A=point(outer,a),B=point(outer,b),C=point(inner,b),D=point(inner,a);return `M${A} A${outer},${outer} 0 0 1 ${B} L${C} A${inner},${inner} 0 0 0 ${D} Z`;};
-    return `<svg viewBox="0 0 300 300" role="img" aria-label="Мишень, подсвечена цель ${target}"><circle cx="150" cy="150" r="148" fill="#131a15" stroke="#52624d"/>${order.map((n,i)=>{const a=-99+i*18,b=a+18,selected=n===target,pos=point(134,a+9);return `<path d="${ring(16,119,a,b)}" fill="${selected?'#d0ed8b':i%2?'#d4d4bc':'#354338'}" stroke="#172319" stroke-width="1.2"/><path d="${ring(109,119,a,b)}" fill="${selected?'#e8ffb6':i%2?'#a65c4f':'#668453'}"/><path d="${ring(66,75,a,b)}" fill="${selected?'#f1cf88':i%2?'#a65c4f':'#668453'}"/><text x="${pos[0]}" y="${pos[1]+5}" text-anchor="middle" fill="${selected?'#d0ed8b':'#e8e8d7'}" font-size="${selected?'19':'13'}">${n}</text>`;}).join('')}<circle cx="150" cy="150" r="16" fill="${target===25?'#d0ed8b':'#668453'}" stroke="#172319"/><circle cx="150" cy="150" r="7" fill="${target===50?'#d0ed8b':'#a65c4f'}" stroke="#172319"/></svg>`;
+    return `<svg viewBox="0 0 300 300" role="img" aria-label="Мишень, подсвечена цель ${target}"><circle cx="150" cy="150" r="148" fill="#212529" stroke="#495057"/>${order.map((n,i)=>{const a=-99+i*18,b=a+18,selected=n===target,pos=point(134,a+9);return `<path d="${ring(16,119,a,b)}" fill="${selected?'#198754':i%2?'#e9ecef':'#343a40'}" stroke="#212529" stroke-width="1.2"/><path d="${ring(109,119,a,b)}" fill="${selected?'#75b798':i%2?'#dc3545':'#198754'}"/><path d="${ring(66,75,a,b)}" fill="${selected?'#ffc107':i%2?'#dc3545':'#198754'}"/><text x="${pos[0]}" y="${pos[1]+5}" text-anchor="middle" fill="${selected?'#75b798':'#f8f9fa'}" font-size="${selected?'19':'13'}">${n}</text>`;}).join('')}<circle cx="150" cy="150" r="16" fill="${target===25?'#75b798':'#198754'}" stroke="#212529"/><circle cx="150" cy="150" r="7" fill="${target===50?'#ffc107':'#dc3545'}" stroke="#212529"/></svg>`;
   }
   function historyHTML() {
     if (!game.turns.length) return '<div class="empty-history">Здесь появятся ваши ходы.<br>Первый бросок — за вами.</div>';
@@ -117,7 +125,7 @@
   function confirmAction(title,text,action) { openModal(title,`<p>${esc(text)}</p><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="${action}">Да, продолжить</button></div>`,'confirm'); }
   function nameDialog(index,source) {
     const p=source==='draft'?draft.players[index]:game.players.find(p=>p.id===index);
-    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" value="${esc(p.name)}" ${tv?'readonly':''}><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><button class="text-button" data-action="toggle-letters">Экранная клавиатура</button><div id="letter-board" ${tv?'':'hidden'}>${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,avatar:p.avatar,lang:'ru'});
+    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" value="${esc(p.name)}" ${tv?'readonly':''}><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><button class="text-button" data-action="toggle-letters" ${tv?'hidden':''}>Экранная клавиатура</button><div id="letter-board" ${tv?'':'hidden'}>${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,avatar:p.avatar,lang:'ru'});
   }
   function lettersHTML(lang) { return `<div class="name-keyboard" aria-label="Буквы имени">${(lang==='ru'?'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ':'ABCDEFGHIJKLMNOPQRSTUVWXYZ').split('').map(c=>`<button data-action="letter" data-value="${c}">${c}</button>`).join('')}<button class="wide" data-action="letter" data-value="space">Пробел</button><button class="wide" data-action="letter" data-value="delete">⌫</button><button class="wide" data-action="letter" data-value="clear">Очистить</button><button class="wide" data-action="alphabet">${lang==='ru'?'ABC':'АБВ'}</button></div>`; }
   function numberDialog(title,value,type,data) {
@@ -126,14 +134,17 @@
   function settingsDialog() {
     openModal('Ваше табло',`<p>Выберите оформление. Управление стрелками доступно в любой теме.</p><span class="field-label">Цветовая схема</span><div class="settings-choices">${[['dark','Тёмная'],['light','Светлая'],['auto','Системная']].map(([v,t])=>`<button data-action="theme" data-value="${v}" class="${theme===v?'selected':''}" aria-pressed="${theme===v}">${t}</button>`).join('')}</div><div class="menu-stack"><button data-action="effects" aria-pressed="${effects}">Анимации и конфетти: ${effects?'вкл.':'выкл.'}</button><button data-action="commentator" aria-pressed="${commentator}">Ишак-комментатор: ${commentator?'вкл.':'выкл.'}</button><button data-action="tv" aria-pressed="${tv}">Режим ТВ: ${tv?'вкл.':'выкл.'}</button></div>`,'settings');
   }
-  function idleComment(text) {
-    return {event:'idle',mood:'friendly',label:'У МИШЕНИ',player:'',text:text||'Вы бросайте. Я посмотрю с умным видом.'};
+  function idleComment(text, player) {
+    return {event:'idle',mood:'friendly',label:'У МИШЕНИ',player:player||'',text:text||(player?`${player}, мишень уже в курсе твоих планов. Я пока присматриваюсь.`:'Вы бросайте. Я посмотрю с умным видом.')};
   }
   function commentatorHTML() {
     if(!commentator)return '';
     const win=G.winner(game);
     if(win && (comment.event!=='win'||comment.player!==win.name))comment=E.commentFor(game,comment.text);
-    if(!win && comment.event==='win')comment=idleComment('Пересчёт принят. Никто ничего не видел.');
+    if(!win && comment.event==='win') {
+      const active=game.players.find(p=>p.id===game.activeId);
+      comment=idleComment(`${active.name}, пересчёт принят. Никто ничего не видел.`,active.name);
+    }
     return `<aside class="donkey-commentator mood-${comment.mood}" aria-label="Ишак-комментатор"><div class="donkey-portrait" aria-hidden="true"><img src="static/img/ishak2.png" alt=""><span class="donkey-mood">${comment.mood==='proud'?'★':comment.mood==='amazed'?'!':comment.mood==='oops'?'?':'•'}</span></div><div class="donkey-copy"><div class="donkey-label">ИШАК ${esc(comment.label)}${comment.player?`<span> · ${esc(comment.player)}</span>`:''}</div><p>${esc(comment.text)}</p></div></aside>`;
   }
   function updateComment() {
@@ -191,7 +202,7 @@
   function record(score,kind) {
     try {
       const p=game.players.find(p=>p.id===game.activeId);const busted=game.mode==='x01'&&(kind==='bust'||score>G.standings(game).find(row=>row.id===p.id).remaining);G.record(game,score,kind);buffer='';persist();
-      const win=G.winner(game);updateComment();render(win?'match-card-open':game.mode==='x01'?'key-five':'sector-hit');
+      const win=G.winner(game);updateComment();render(win?'match-card-open':game.mode==='x01'?'key-five':'sector-hit',!tv);
       const next=game.players.find(p=>p.id===game.activeId);
       announce(win?`${win.name} побеждает!`:kind==='hit'?`Сектор закрыт. Следующая цель: ${G.SECTORS[G.standings(game).find(row=>row.id===p.id).progress]}.`:`Ход записан. Сейчас ходит ${next.name}.`);
       if(win)celebrate();else if(!busted&&kind!=='miss')react(score);
@@ -203,11 +214,11 @@
     let next=input.value;if(value==='clear')next='';else if(value==='delete')next=next.slice(0,-1);else if(next.length<Number(input.maxLength))next=(next==='0'?'':next)+value;
     input.value=next;if($('modal').hidden)buffer=next;
   }
-  function startGame() { game=G.create(draft.mode,draft.total,draft.players);comment=idleComment();lastCommentAt=0;view='game';buffer='';historyExpanded=false;persist();render(game.mode==='x01'?'key-five':'sector-hit');announce('Партия началась. Ходит '+game.players[0].name); }
+  function startGame() { game=G.create(draft.mode,draft.total,draft.players);comment=idleComment('',game.players[0].name);lastCommentAt=0;view='game';buffer='';historyExpanded=false;persist();render(game.mode==='x01'?'key-five':'sector-hit',!tv);announce('Партия началась. Ходит '+game.players[0].name); }
   function goHome() { buffer='';view='home';render(game?'resume':'mode-1'); }
   function celebrate() {
     if(!effects||motionMedia.matches)return;
-    for(let i=0;i<40;i++){const el=document.createElement('i');el.className='confetti-piece';el.style.left=(Math.random()*100)+'%';el.style.background=['#d0ed8b','#edc47c','#d6e3de'][i%3];el.style.animationDelay=(Math.random()*.4)+'s';$('confetti').append(el);setTimeout(()=>el.remove(),2700);}
+    for(let i=0;i<40;i++){const el=document.createElement('i');el.className='confetti-piece';el.style.left=(Math.random()*100)+'%';el.style.background=['#198754','#ffc107','#dc3545'][i%3];el.style.animationDelay=(Math.random()*.4)+'s';$('confetti').append(el);setTimeout(()=>el.remove(),2700);}
   }
   function react(score) {
     if(game.mode==='x01'&&score>=100)celebrate();

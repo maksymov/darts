@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const WIDTH = 1080;
-  const C = { bg:'#151916', panel:'#222b23', ink:'#f0f1e6', muted:'#a4afa3', green:'#d0ed8b', amber:'#edc47c', line:'#3b463b' };
+  const C = { bg:'#212529', panel:'#2b3035', ink:'#f8f9fa', muted:'#adb5bd', accent:'#198754', amber:'#ffc107', line:'#495057' };
   function portrait() {
     return new Promise(resolve => {
       const img = new Image();
@@ -51,23 +51,23 @@
     ctx.fillStyle=C.bg;ctx.fillRect(0,0,WIDTH,height);
     ctx.strokeStyle=C.line;ctx.lineWidth=2;
     [115,150,185].forEach(r=>{ctx.beginPath();ctx.arc(990,235,r,0,Math.PI*2);ctx.stroke();});
-    ctx.strokeStyle=C.green;ctx.lineWidth=3;
+    ctx.strokeStyle=C.accent;ctx.lineWidth=3;
     [14,22].forEach(r=>{ctx.beginPath();ctx.arc(94,86,r,0,Math.PI*2);ctx.stroke();});
     text(ctx,'дартс.',132,102,44,C.ink,400,700);
     text(ctx,'ВАШ ДОМАШНИЙ КЛУБ',650,92,17,C.muted,358,700);
     const mode=summary.mode==='x01'?summary.total+' / X01':'ПО СЕКТОРАМ';
     const date=new Date(summary.createdAt);
     const dateText=Number.isFinite(date.getTime())?date.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}):'';
-    text(ctx,mode,72,159,20,C.green,500,700);
+    text(ctx,mode,72,159,20,C.accent,500,700);
     text(ctx,dateText,650,159,20,C.muted,358);
-    text(ctx,'ПОБЕДИТЕЛЬ МАТЧА',72,249,21,C.green,850,700);
+    text(ctx,'ПОБЕДИТЕЛЬ МАТЧА',72,249,21,C.accent,850,700);
     let winnerSize=90;
     while(winnerSize>44){font(ctx,winnerSize,700);if(ctx.measureText(summary.winner.name).width<=936)break;winnerSize-=2;}
     text(ctx,summary.winner.name,72,356,winnerSize,C.ink,936,700);
     text(ctx,'Мишень покорена. Хорошая игра.',76,411,28,C.muted,900);
     box(ctx,72,459,454,134,C.panel);box(ctx,546,459,462,134,C.panel);
     text(ctx,summary.mode==='x01'?'ЛУЧШИЙ ЗАСЧИТАННЫЙ ХОД':'ЦЕЛИ ПОБЕДИТЕЛЯ',96,491,15,C.muted,406,700);
-    text(ctx,summary.mode==='x01'?summary.best:'22 / 22',96,544,48,C.green,406,700);
+    text(ctx,summary.mode==='x01'?summary.best:'22 / 22',96,544,48,C.accent,406,700);
     const bestNames=summary.bestPlayers.length>2?summary.bestPlayers.slice(0,2).join(', ')+' и ещё '+(summary.bestPlayers.length-2):summary.bestPlayers.join(' · ');
     text(ctx,summary.mode==='x01'?bestNames:'От единицы до яблочка',96,574,18,C.muted,406);
     text(ctx,summary.mode==='x01'?'ХОДОВ У ПОБЕДИТЕЛЯ':'ИГРОКОВ У МИШЕНИ',570,491,15,C.muted,414,700);
@@ -79,9 +79,9 @@
     summary.rows.forEach(row=>{
       if(row.id===summary.winner.id)box(ctx,72,y-5,936,74,C.panel,12);
       const champion=row.id===summary.winner.id;
-      text(ctx,champion?'★':'·',94,y+43,29,champion?C.green:C.muted,30,700);
-      text(ctx,row.name,139,y+43,29,champion?C.green:C.ink,605,champion?700:400);
-      ctx.textAlign='right';text(ctx,summary.mode==='x01'?row.remaining:row.progress+' / 22',984,y+43,32,champion?C.green:C.ink,220,700);ctx.textAlign='left';
+      text(ctx,champion?'★':'·',94,y+43,29,champion?C.accent:C.muted,30,700);
+      text(ctx,row.name,139,y+43,29,champion?C.accent:C.ink,605,champion?700:400);
+      ctx.textAlign='right';text(ctx,summary.mode==='x01'?row.remaining:row.progress+' / 22',984,y+43,32,champion?C.accent:C.ink,220,700);ctx.textAlign='left';
       y+=82;
     });
     text(ctx,'На момент победного хода',72,y+18,18,C.muted,900);
@@ -90,7 +90,7 @@
     text(ctx,'НАГРАДА ОТ ИШАКА',96,awardY+36,16,C.amber,710,700);
     text(ctx,summary.award.title,96,awardY+84,32,C.ink,710,700);
     text(ctx,summary.award.reason,96,awardY+119,19,C.muted,710);
-    wrap(ctx,'«'+summary.award.quote+'»',96,awardY+160,690,23,C.green,30);
+    wrap(ctx,'«'+summary.award.quote+'»',96,awardY+160,690,23,C.accent,30);
     if(donkey)ctx.drawImage(donkey,820,awardY+55,168,158);
     text(ctx,'ХОРОШАЯ КОМПАНИЯ. ТОЧНЫЙ БРОСОК.',72,height-40,16,C.muted,900,700);
     const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('Не удалось подготовить PNG.')),'image/png'));

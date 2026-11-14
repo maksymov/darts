@@ -5,8 +5,8 @@
   "start_url": "/beta/",
   "scope": "/beta/",
   "display": "standalone",
-  "background_color": "#151916",
-  "theme_color": "#151916",
+  "background_color": "#212529",
+  "theme_color": "#212529",
   "description": "Счёт для вашей игры в дартс — на телефоне, планшете и телевизоре",
   "icons": [
     {
