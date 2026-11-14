@@ -156,16 +156,30 @@
 .tv.tv-results main{display:flex;flex:1;flex-direction:column;width:calc(100% - 5vw);max-width:1800px;min-height:0;overflow-y:auto;padding:16px 0}
 .tv.tv-results .match-top{margin-bottom:16px}
 .tv.tv-results .win-banner{margin-bottom:16px}
-.tv.tv-results .game-layout{display:block;min-height:0}
+.tv.tv-results .game-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,292px);grid-template-rows:auto 1fr;align-items:start;gap:16px;min-height:0}
+.tv.tv-results .scoreboard{grid-column:1;grid-row:1;min-width:0}
+.tv.tv-results .game-sidebar{grid-column:2;grid-row:1 / span 2}
+.tv.tv-results .history{grid-column:1;grid-row:2;margin-top:0}
 .tv.tv-results .players-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));align-content:start;gap:16px}
 .tv.tv-results .player-card{min-height:0;padding:16px}
 .tv.tv-results .turn-label{margin-top:10px}
 .tv.tv-results .remaining{font-size:clamp(42px,4vw,70px);line-height:1;margin:4px 0 8px}
 .tv.tv-results .player-bottom{align-items:flex-end;flex-wrap:wrap;margin-top:0;padding-top:8px}
-.tv.tv-results .game-sidebar{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px;margin-top:16px}
+.tv.tv-results .game-sidebar{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin-top:0}
 .tv.tv-results .game-sidebar>.controller,.tv.tv-results .game-sidebar>.donkey-commentator{align-self:start;margin:0}
-.tv.tv-results .history{margin-top:16px}
+.tv.game-active .players-grid.many-players,.tv.tv-results .players-grid.many-players{grid-template-columns:repeat(auto-fit,minmax(min(100%,148px),1fr));gap:10px}
+.tv.game-active .many-players .player-card,.tv.tv-results .many-players .player-card{padding:8px}
+.tv.game-active .many-players .avatar,.tv.tv-results .many-players .avatar{display:none}
+.tv.game-active .many-players .player-title h2,.tv.tv-results .many-players .player-title h2{font-size:14px;letter-spacing:0}
+.tv.game-active .many-players .player-title small,.tv.tv-results .many-players .player-title small{font-size:9px;margin-top:2px}
+.tv.game-active .many-players .player-top .icon-button,.tv.tv-results .many-players .player-top .icon-button{min-width:28px;padding:2px;font-size:17px}
+.tv.game-active .many-players .turn-label,.tv.tv-results .many-players .turn-label{margin-top:3px;font-size:8px;letter-spacing:1px}
+.tv.game-active .many-players .remaining,.tv.tv-results .many-players .remaining{font-size:clamp(30px,2.5vw,42px);letter-spacing:-1px;margin:2px 0 4px}
+.tv.game-active .many-players .player-bottom,.tv.tv-results .many-players .player-bottom{gap:4px;padding-top:4px;font-size:9px}
 @media(max-width:900px){
   .tv.tv-results body{height:auto;min-height:100vh;overflow:auto}
   .tv.tv-results main{display:block;min-height:0;overflow:visible;padding:16px 0}
+  .tv.tv-results .game-layout{display:block}
+  .tv.tv-results .game-sidebar{margin-top:16px}
+  .tv.tv-results .history{margin-top:16px}
 }
