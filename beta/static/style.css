@@ -186,6 +186,8 @@
 .tv.tv-results .many-players-history td button{min-width:0;min-height:28px;padding:3px 4px;font-size:10px;white-space:normal}
 .tv.game-active .players-grid.many-players{grid-template-columns:repeat(auto-fit,minmax(min(100%,148px),1fr));gap:10px}
 .tv.game-active .players-grid.stable-player-grid{grid-template-columns:repeat(var(--player-columns,3),minmax(0,1fr));gap:10px}
+.tv.game-active .players-grid.scaled-player-grid{height:var(--player-height);grid-template-rows:repeat(var(--player-rows),minmax(0,1fr));align-content:stretch}
+.tv.game-active .players-grid.scaled-player-grid .player-card{transform:scale(var(--grid-scale,1));transform-origin:top left}
 .tv.tv-results .players-grid.many-players{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:6px}
 .tv.game-active .many-players .player-card,.tv.tv-results .many-players .player-card{padding:8px}
 .tv.game-active .many-players .avatar,.tv.tv-results .many-players .avatar{display:none}

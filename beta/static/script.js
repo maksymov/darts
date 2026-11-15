@@ -61,6 +61,7 @@
     applyTheme();
     fitPlayers();
     if (focus) focusTo(focus, scrollFocus);
+    requestAnimationFrame(fitPlayers);
   }
   function fitPlayers() {
     const grid = document.querySelector('.players-grid');
@@ -76,13 +77,18 @@
     grid.style.removeProperty('--player-height');
     grid.style.removeProperty('--player-rows');
     grid.style.removeProperty('--player-row-height');
+    grid.style.removeProperty('--grid-scale');
     const count = grid.children.length;
-    grid.classList.remove('stable-player-grid');
+    grid.classList.remove('stable-player-grid', 'scaled-player-grid');
+    for (const card of grid.children) {
+      card.style.removeProperty('width');
+      card.style.removeProperty('height');
+    }
     const compact = count === 2 || count === 3;
     const mobilePortrait = matchMedia('(max-width: 600px) and (orientation: portrait)').matches;
     const mobileLandscape = matchMedia('(max-width: 900px) and (orientation: landscape)').matches;
     const mobilePlayerGrid = mobilePortrait || mobileLandscape;
-    if (count > 4 && game.mode === 'x01' && !G.finished(game) && !mobilePlayerGrid &&
+    if (count > 4 && !G.finished(game) && !mobilePlayerGrid &&
         document.documentElement.classList.contains('tv')) {
       grid.classList.remove('many-players', 'nine-players');
     }
@@ -106,10 +112,39 @@
       restoreScroll();
       return;
     }
-    if (count > 4 && game.mode === 'x01' && !G.finished(game) && document.documentElement.classList.contains('tv')) {
-      grid.classList.add('stable-player-grid', 'fill-players');
-      grid.style.setProperty('--player-columns', String(Math.ceil(Math.sqrt(count))));
-      grid.style.setProperty('--player-height', `${height}px`);
+    if (document.documentElement.classList.contains('game-active')) {
+      const gameAvailable = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY) - 8;
+      const gameHeight = Math.max(0, gameAvailable - grid.getBoundingClientRect().top - scrollOffset);
+      if (count > 4) {
+        grid.classList.remove('many-players', 'nine-players');
+        grid.classList.add('stable-player-grid');
+        grid.style.setProperty('--player-columns', String(Math.ceil(Math.sqrt(count))));
+      }
+      grid.classList.remove('fill-players');
+      if (gameHeight <= 0) {
+        restoreScroll();
+        return;
+      }
+      const naturalHeight = grid.getBoundingClientRect().height;
+      if (naturalHeight > gameHeight) {
+        const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+        const rows = Math.ceil(count / columns);
+        const rowGap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+        const naturalCardHeight = (naturalHeight - rowGap * (rows - 1)) / rows;
+        const availableCardHeight = (gameHeight - rowGap * (rows - 1)) / rows;
+        const scale = Math.max(.1, availableCardHeight / naturalCardHeight);
+        grid.classList.add('scaled-player-grid');
+        grid.style.setProperty('--grid-scale', String(scale));
+        grid.style.setProperty('--player-rows', String(rows));
+        grid.style.setProperty('--player-height', `${gameHeight}px`);
+        for (const card of grid.children) {
+          card.style.width = `${100 / scale}%`;
+          card.style.height = `${100 / scale}%`;
+        }
+      } else if (count > 1 && !compact) {
+        grid.classList.add('fill-players');
+        grid.style.setProperty('--player-height', `${gameHeight}px`);
+      }
       restoreScroll();
       return;
     }
@@ -195,10 +230,10 @@
       const remaining = game.mode === 'x01' ? p.remaining : (G.SECTORS[p.progress] || '✓');
       const gap = game.mode === 'x01' ? p.remaining - best : best - p.progress;
       const statusLabel = gap ? (game.mode === 'x01' ? '+' : '') + gap + ' отстал' : leader ? 'Лидер' : 'На равных';
-      const bottomLabel = game.mode === 'x01'
-        ? `<span><span class="last-label-full">Последний:</span><span class="last-label-short">Посл.:</span> <strong>${p.last===null?'—':esc(p.last)}</strong></span><span>Макс.: <strong>${p.best===null?'—':p.best}</strong></span>`
-        : `<span>${p.last || '—'}</span>`;
-      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2 class="${leader?'leader-name':''}"><button class="player-name-menu" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}" aria-haspopup="dialog">${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</button></h2></div></div><div class="turn-label ${gap?'has-gap':''}">${statusLabel}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom">${bottomLabel}</div></article>`;
+      const bottom = game.mode==='x01'
+        ? `<div class="player-bottom"><span><span class="last-label-full">Последний:</span><span class="last-label-short">Посл.:</span> <strong>${p.last===null?'—':esc(p.last)}</strong></span><span>Макс.: <strong>${p.best===null?'—':p.best}</strong></span></div>`
+        : '';
+      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2 class="${leader?'leader-name':''}"><button class="player-name-menu" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}" aria-haspopup="dialog">${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</button></h2></div></div><div class="turn-label ${gap?'has-gap':''}">${statusLabel}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}${bottom}</article>`;
     }).join('');
     const controller = win && !finishingRound
       ? '<aside class="controller"><div class="eyebrow">ДО НОВОЙ ВСТРЕЧИ У МИШЕНИ</div><h2>Отличная партия.</h2><p class="mode-description">Результаты сохранены. Можно сыграть ещё раз с тем же составом или выбрать новый режим.</p><button class="submit-score" data-action="home">Выбрать игру →</button></aside>'
