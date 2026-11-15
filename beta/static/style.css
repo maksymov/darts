@@ -53,3 +53,12 @@
 @media(max-width:600px){.match-card-layout{grid-template-columns:1fr;gap:17px}.card-preview img{max-height:38vh}.card-details .eyebrow{display:none}.card-details h3{font-size:21px;margin-bottom:8px}.card-details>p{font-size:12px;margin-bottom:13px}.card-award{padding:12px;margin-bottom:14px}.card-export-actions{grid-template-columns:1fr 1fr;gap:8px}.card-export-actions button{font-size:13px;padding:10px}.win-controls{flex-wrap:wrap}.win-controls button{flex:1 1 130px}.win-controls #match-card-open{flex-basis:100%}}
 @media(min-width:901px) and (max-height:800px){.tv .donkey-commentator{min-height:78px;padding:8px 12px;margin-top:12px;gap:10px}.tv .donkey-portrait{flex-basis:58px;width:58px;height:58px}.tv .donkey-copy p{font-size:16px}.tv .donkey-label{font-size:11px}.tv .history{margin-top:0}.tv .match-card-dialog{padding:20px}.tv .card-preview img{max-height:67vh}}
 @media(prefers-reduced-motion:reduce){.donkey-portrait img{transition:none}}
+
+@media(max-width:600px){
+  .tv .site-header{flex-wrap:nowrap;gap:8px;min-height:56px;padding:6px 5%}
+  .tv .brand{min-height:0;height:40px;gap:5px;padding:0;font-size:24px}
+  .brand-mark{font-size:29px}
+  .beta-notice{display:none}
+  .tv .header-actions{gap:4px}
+  .tv .header-actions .icon-button{width:36px;min-width:36px;height:36px;min-height:36px;padding:4px;font-size:18px}
+}

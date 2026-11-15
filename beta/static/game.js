@@ -15,7 +15,7 @@
     };
   }
   function standings(game) {
-    const rows = game.players.map(p => ({ ...p, remaining: game.total, progress: p.start || 0, visits: 0, last: null }));
+    const rows = game.players.map(p => ({ ...p, remaining: game.total, progress: p.start || 0, visits: 0, last: null, best: null }));
     for (const turn of game.turns) {
       const p = rows.find(row => row.id === turn.playerId);
       if (!p) continue;
@@ -25,7 +25,10 @@
         p.last = turn.kind === 'hit' ? 'Попадание' : 'Ход передан';
       } else {
         const bust = turn.kind === 'bust' || turn.score > p.remaining;
-        if (!bust) p.remaining -= turn.score;
+        if (!bust) {
+          p.remaining -= turn.score;
+          p.best = p.best === null ? turn.score : Math.max(p.best, turn.score);
+        }
         p.last = bust ? 'Перебор' : turn.score;
       }
     }

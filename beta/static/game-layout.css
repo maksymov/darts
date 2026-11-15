@@ -35,6 +35,9 @@
 .leader-gap.has-gap{color:var(--gap-ink)}
 .leader-gap strong{font-size:clamp(18px,1.8vw,25px);color:inherit;line-height:1.1;font-variant-numeric:tabular-nums}
 .leader-gap>span{font-size:12px}
+.player-standing{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px;margin:10px 0 4px;min-height:32px}
+.tv .player-standing .turn-label{margin:0;min-height:0;white-space:nowrap}
+.best-visit{white-space:nowrap}
 .tv .game-sidebar{position:fixed;right:var(--game-inset);top:16px;bottom:16px;width:var(--sidebar-width);min-height:0;display:flex;flex-direction:column;gap:10px;overflow:auto;padding:0 4px;scroll-padding:8px}
 .tv .game-sidebar .controller{position:static;display:flex;flex-direction:column;flex:0 0 auto;padding:12px;gap:10px;min-height:0;overflow:visible}
 .tv .score-controls{display:grid;grid-template-columns:minmax(0,1fr);gap:7px}
@@ -108,6 +111,7 @@
   .tv .leader-gap{flex-wrap:wrap;gap:2px;font-size:10px;line-height:1.2}
   .tv .leader-gap strong{font-size:16px}
   .tv .leader-gap>span{font-size:9px}
+  .player-standing{flex-direction:column;justify-content:flex-start;align-items:flex-start;gap:3px;min-height:34px;margin:2px 0}
   .tv .last-visit{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .tv .player-card .progress-bar{margin:3px 0;height:3px}
   .tv.game-active .game-sidebar{position:fixed;z-index:10;top:auto;left:0;right:0;bottom:0;width:auto;height:calc(var(--dock-height) + env(safe-area-inset-bottom,0px));padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -5px 20px #0003;overflow:auto}
