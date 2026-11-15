@@ -312,7 +312,7 @@
 .tv.game-active .players-grid.fill-players .player-bottom,
 .tv.tv-results .players-grid.fill-players .player-bottom{margin-top:auto}
 @media(min-width:901px){
-  .tv.game-active:not(.sector-game) .players-grid.single-player-grid{grid-template-columns:minmax(0,1fr)}
+  .tv.game-active .players-grid.single-player-grid{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-height:700px){
   .tv.compact-players-game .history th{padding:4px 6px;font-size:12px}
