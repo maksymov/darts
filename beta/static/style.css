@@ -185,6 +185,7 @@
 .tv.tv-results .many-players-history th:first-child,.tv.tv-results .many-players-history td:first-child{width:32px}
 .tv.tv-results .many-players-history td button{min-width:0;min-height:28px;padding:3px 4px;font-size:10px;white-space:normal}
 .tv.game-active .players-grid.many-players{grid-template-columns:repeat(auto-fit,minmax(min(100%,148px),1fr));gap:10px}
+.tv.game-active .players-grid.stable-player-grid{grid-template-columns:repeat(var(--player-columns,3),minmax(0,1fr));gap:10px}
 .tv.tv-results .players-grid.many-players{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:6px}
 .tv.game-active .many-players .player-card,.tv.tv-results .many-players .player-card{padding:8px}
 .tv.game-active .many-players .avatar,.tv.tv-results .many-players .avatar{display:none}
@@ -308,6 +309,9 @@
 .tv.tv-results .players-grid.fill-players .player-card{display:flex;flex-direction:column}
 .tv.game-active .players-grid.fill-players .player-bottom,
 .tv.tv-results .players-grid.fill-players .player-bottom{margin-top:auto}
+@media(min-width:901px){
+  .tv.game-active:not(.sector-game) .players-grid.single-player-grid{grid-template-columns:minmax(0,1fr)}
+}
 @media(max-height:700px){
   .tv.compact-players-game .history th{padding:4px 6px;font-size:12px}
   .tv.compact-players-game .history td{padding:2px 6px}

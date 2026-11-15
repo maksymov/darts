@@ -77,14 +77,19 @@
     grid.style.removeProperty('--player-rows');
     grid.style.removeProperty('--player-row-height');
     const count = grid.children.length;
+    grid.classList.remove('stable-player-grid');
     const compact = count === 2 || count === 3;
     const mobilePortrait = matchMedia('(max-width: 600px) and (orientation: portrait)').matches;
     const mobileLandscape = matchMedia('(max-width: 900px) and (orientation: landscape)').matches;
     const mobilePlayerGrid = mobilePortrait || mobileLandscape;
+    if (count > 4 && game.mode === 'x01' && !G.finished(game) && !mobilePlayerGrid &&
+        document.documentElement.classList.contains('tv')) {
+      grid.classList.remove('many-players', 'nine-players');
+    }
     grid.classList.remove('adaptive-players', 'fill-players');
     grid.classList.toggle('mobile-player-grid', mobilePlayerGrid);
-    grid.classList.toggle('single-player-grid', mobilePlayerGrid && count === 1);
-    if (!compact && !mobilePlayerGrid) grid.classList.add('fill-players');
+    grid.classList.toggle('single-player-grid', count === 1);
+    if (!compact && (count > 1 || game.mode === 'sectors') && !mobilePlayerGrid) grid.classList.add('fill-players');
     const scrollOffset = window.scrollY + main.scrollTop;
     const controls = document.querySelector('.score-controls') || (game.mode === 'sectors' ? document.querySelector('.game-sidebar') : null);
     const controlsRect = controls?.getBoundingClientRect();
@@ -98,6 +103,17 @@
       grid.classList.add('adaptive-players');
       grid.style.setProperty('--player-columns', count === 1 ? '1' : '2');
       grid.style.setProperty('--player-scale', count === 1 ? '30px' : '22px');
+      restoreScroll();
+      return;
+    }
+    if (count > 4 && game.mode === 'x01' && !G.finished(game) && document.documentElement.classList.contains('tv')) {
+      grid.classList.add('stable-player-grid', 'fill-players');
+      grid.style.setProperty('--player-columns', String(Math.ceil(Math.sqrt(count))));
+      grid.style.setProperty('--player-height', `${height}px`);
+      restoreScroll();
+      return;
+    }
+    if (count === 1 && game.mode === 'x01') {
       restoreScroll();
       return;
     }
