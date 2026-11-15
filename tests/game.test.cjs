@@ -15,6 +15,12 @@ function run() {
     G.record(g,40);assert.equal(G.winner(g).id,'p0');assert.ok(G.finished(g));assert.throws(()=>G.record(g,0));
     G.undo(g);assert.equal(G.winner(g),null);assert.equal(g.activeId,'p0');
   });
+  check('Best X01 visit tracks only scored visits through edits and undo',()=>{
+    const g=G.create('x01',100,players);G.record(g,60);G.record(g,0);G.record(g,50);
+    assert.equal(G.standings(g)[0].best,60);
+    G.edit(g,0,40);assert.equal(G.standings(g)[0].best,50);
+    G.undo(g);assert.equal(G.standings(g)[0].best,40);
+  });
   check('The winner can finish before the round ends and remaining players get one final turn',()=>{
     const g=G.create('x01',8,[...players,{name:'Вера'}]);G.record(g,8);
     assert.equal(G.winner(g).id,'p0');assert.deepEqual(G.pendingFinish(g),['p1','p2']);assert.equal(G.finished(g),false);

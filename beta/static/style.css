@@ -67,6 +67,7 @@
 }
 .leader-gap{color:var(--danger);font-weight:700;white-space:nowrap}
 .leader-gap:not(.has-gap){color:var(--muted);font-weight:500}
+.turn-label.has-gap{color:var(--danger)}
 .game-sidebar .donkey-commentator{margin-top:0}
 .game-sidebar .controller{position:static}
 .tv .controller{padding:12px}
@@ -157,9 +158,9 @@
 }
 @media(max-width:900px){
   .tv.game-active .tv-game-tool-label{display:none}
-  .tv.game-active .tv-game-tools button{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;width:48px;min-width:48px;height:48px;min-height:48px;padding:4px}
-  .tv.game-active .tv-game-tools button>span[aria-hidden=true]{display:grid;place-items:center;font-size:28px;line-height:1}
-  .tv.game-active .tv-game-tools .toolbar-icon{width:24px;height:24px}
+  .tv.game-active .tv-game-tools button{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;width:40px;min-width:40px;height:40px;min-height:40px;padding:4px}
+  .tv.game-active .tv-game-tools button>span[aria-hidden=true]{display:grid;place-items:center;font-size:24px;line-height:1}
+  .tv.game-active .tv-game-tools .toolbar-icon{width:20px;height:20px}
 }
 
 .tv.tv-results .site-header,.tv.tv-results .remote-hint{display:none}
@@ -431,7 +432,7 @@
   .tv.game-active .tv-game-toolbar{flex-wrap:nowrap;gap:0;margin-bottom:8px}
   .tv.game-active .tv-game-toolbar h1{display:block;flex:1 1 0;min-width:0;margin-right:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(14px,4vw,18px);letter-spacing:0}
   .tv.game-active .tv-game-tools{flex-wrap:nowrap;gap:4px}
-  .tv.game-active .tv-game-tools button{flex:0 0 auto;width:44px;min-width:44px;height:44px;min-height:44px;padding:4px}
+  .tv.game-active .tv-game-tools button{flex:0 0 auto;width:40px;min-width:40px;height:40px;min-height:40px;padding:4px}
   .tv.game-active.score-entry-active{--mobile-score-height:clamp(190px,36vh,300px);scroll-padding-bottom:calc(var(--mobile-score-height) + env(safe-area-inset-bottom,0px) + 12px)}
   .tv.game-active.score-entry-active main{padding-bottom:calc(var(--mobile-score-height) + env(safe-area-inset-bottom,0px) + 24px)}
   .tv.game-active.score-entry-active .game-sidebar .controller{display:contents}
@@ -516,6 +517,7 @@
 .tv.tv-results .players-grid.mobile-player-grid .player-bottom{grid-column:1 / -1;grid-row:4;align-self:end;gap:.3em;margin-top:0;padding-top:.2em;font-size:.65em;line-height:1.1}
 .tv.game-active .players-grid.mobile-player-grid .avatar,
 .tv.tv-results .players-grid.mobile-player-grid .avatar{width:1.4em;height:1.4em;font-size:.75em}
+.last-label-short{display:none}
 @media(max-width:600px) and (orientation:portrait), (max-width:900px) and (orientation:landscape){
   .tv.game-active .players-grid.mobile-player-grid,
   .tv.tv-results .players-grid.mobile-player-grid{max-height:none;overflow:visible;grid-auto-rows:var(--mobile-player-card-height);align-content:start}
@@ -549,8 +551,22 @@
 @media(max-width:600px) and (orientation:portrait){
   .tv.game-active .players-grid.mobile-player-grid,
   .tv.tv-results .players-grid.mobile-player-grid{--mobile-player-card-height:112px}
+  .tv.game-active .players-grid.mobile-player-grid .last-label-full,
+  .tv.tv-results .players-grid.mobile-player-grid .last-label-full{display:none}
+  .tv.game-active .players-grid.mobile-player-grid .last-label-short,
+  .tv.tv-results .players-grid.mobile-player-grid .last-label-short{display:inline}
+  .tv.game-active .players-grid.mobile-player-grid .player-bottom,
+  .tv.tv-results .players-grid.mobile-player-grid .player-bottom{flex-wrap:nowrap;gap:.1em;font-size:.48em;white-space:nowrap}
 }
 @media(max-width:900px) and (orientation:landscape){
   .tv.game-active .players-grid.mobile-player-grid,
   .tv.tv-results .players-grid.mobile-player-grid{--mobile-player-card-height:100px}
+}
+@media(max-width:600px){
+  .tv .site-header{flex-wrap:nowrap;gap:8px;min-height:56px;padding:6px 5%}
+  .tv .brand{min-height:0;height:40px;gap:5px;padding:0;font-size:24px}
+  .brand-mark{font-size:29px}
+  .beta-notice{display:none}
+  .tv .header-actions{gap:4px}
+  .tv .header-actions .icon-button{width:36px;min-width:36px;height:36px;min-height:36px;padding:4px;font-size:18px}
 }
