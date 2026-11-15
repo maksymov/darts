@@ -97,7 +97,7 @@
       grid.classList.remove('fill-players');
       grid.classList.add('adaptive-players');
       grid.style.setProperty('--player-columns', count === 1 ? '1' : '2');
-      grid.style.setProperty('--player-scale', count === 1 ? '22px' : '16px');
+      grid.style.setProperty('--player-scale', count === 1 ? '26px' : '19px');
       restoreScroll();
       return;
     }

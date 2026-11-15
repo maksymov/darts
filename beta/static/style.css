@@ -561,9 +561,9 @@
 }
 @media(max-width:600px) and (orientation:portrait){
   .tv.game-active .players-grid.mobile-player-grid,
-  .tv.tv-results .players-grid.mobile-player-grid{--mobile-player-card-height:78px}
+  .tv.tv-results .players-grid.mobile-player-grid{--mobile-player-card-height:94px}
 }
 @media(max-width:900px) and (orientation:landscape){
   .tv.game-active .players-grid.mobile-player-grid,
-  .tv.tv-results .players-grid.mobile-player-grid{--mobile-player-card-height:70px}
+  .tv.tv-results .players-grid.mobile-player-grid{--mobile-player-card-height:84px}
 }
