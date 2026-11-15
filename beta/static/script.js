@@ -34,6 +34,7 @@
     document.documentElement.classList.toggle('game-active', view === 'game' && !!game && !G.finished(game));
     document.documentElement.classList.toggle('tv-results', view === 'game' && !!game && G.finished(game));
     document.documentElement.classList.toggle('score-entry-active', view === 'game' && !!$('score-input'));
+    document.documentElement.classList.toggle('sector-game', view === 'game' && !!game && game.mode === 'sectors');
     document.documentElement.classList.toggle('nine-players-game', view === 'game' && !!game && game.players.length === 9);
     document.documentElement.classList.toggle('compact-players-game', view === 'game' && !!game && (game.players.length === 2 || game.players.length === 3));
     document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
@@ -76,17 +77,22 @@
     const count = grid.children.length;
     const compact = count === 2 || count === 3;
     const mobileLandscapeSectors = game.mode === 'sectors' && matchMedia('(max-width: 900px) and (orientation: landscape)').matches;
+    const mobilePortraitSectors = game.mode === 'sectors' && matchMedia('(max-width: 600px) and (orientation: portrait)').matches;
+    const scrollExtraSectorCards = mobileLandscapeSectors && count >= 7;
+    const fitTwoPortraitRows = mobilePortraitSectors && count >= 3;
     grid.classList.remove('adaptive-players', 'fill-players');
-    if (!compact) grid.classList.add('fill-players');
+    grid.classList.toggle('portrait-sector-players', fitTwoPortraitRows);
+    if (!compact && !scrollExtraSectorCards && !fitTwoPortraitRows) grid.classList.add('fill-players');
     const scrollOffset = window.scrollY + main.scrollTop;
-    const controls = document.querySelector('.score-controls');
+    const controls = document.querySelector('.score-controls') || (game.mode === 'sectors' ? document.querySelector('.game-sidebar') : null);
     const controlsRect = controls?.getBoundingClientRect();
     const controlsBottom = controlsRect && getComputedStyle(controls).position === 'fixed'
       ? controlsRect.top + scrollOffset
       : Infinity;
     const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY, controlsBottom) - 8;
     const height = Math.max(0, available - grid.getBoundingClientRect().top - scrollOffset);
-    if (!mobileLandscapeSectors && count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
+    if (fitTwoPortraitRows) grid.style.setProperty('--player-height', `${height}px`);
+    if (!mobileLandscapeSectors && !fitTwoPortraitRows && count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
         (!compact || historyExpanded || history.getBoundingClientRect().bottom + scrollOffset <= available)) {
       if (!compact) grid.style.setProperty('--player-height', `${height}px`);
       restoreScroll();
@@ -94,11 +100,11 @@
     }
     grid.classList.add('adaptive-players');
     const desired = count === 9 ? 3 : Math.ceil(Math.sqrt(count * 1.6));
-    const maxColumns = Math.min(count, mobileLandscapeSectors ? 3 : 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
+    const maxColumns = Math.min(count, fitTwoPortraitRows ? 2 : mobileLandscapeSectors ? 3 : 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
     const center = Math.min(desired, maxColumns);
     const columnsToTry = Array.from(new Set([center, center - 1, center + 1, center - 2, center + 2, maxColumns, maxColumns - 1]))
       .filter(columns => columns >= 1 && columns <= maxColumns);
-    const scales = count === 9
+    const scales = scrollExtraSectorCards || fitTwoPortraitRows ? [1, .9, .8] : count === 9
       ? [3, 2.8, 2.6, 2.4, 2.2, 2, 1.8, 1.6, 1.4, 1.2, 1, .9, .8, .7, .6, .5, .4, .3]
       : [1, .9, .8, .7, .6, .5, .4, .3];
     let best = null, preferred = null;
@@ -110,7 +116,10 @@
         const scale = scales[index];
         grid.style.setProperty('--player-scale', `${16 * scale}px`);
         const gridRect = grid.getBoundingClientRect();
-        const bottom = gridRect.bottom + window.scrollY + main.scrollTop;
+        const visibleCardsBottom = scrollExtraSectorCards || fitTwoPortraitRows
+          ? grid.children[Math.min(count, columns * 2) - 1].getBoundingClientRect().bottom
+          : gridRect.bottom;
+        const bottom = visibleCardsBottom + window.scrollY + main.scrollTop;
         const cardsFit = bottom <= available;
         const historyFits = cardsFit && (historyExpanded || history.getBoundingClientRect().bottom + window.scrollY + main.scrollTop <= available);
         const score = (compact && historyFits ? 10000 : cardsFit ? 5000 : 0) + scale * 1000 -
@@ -135,7 +144,7 @@
     if (preferred && preferred.cardsFit) best = preferred;
     grid.style.setProperty('--player-columns', best.columns);
     grid.style.setProperty('--player-scale', `${16 * best.scale}px`);
-    if (!compact && best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
+    if (!compact && !scrollExtraSectorCards && !fitTwoPortraitRows && best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
     restoreScroll();
   }
   let resizeTimer;
