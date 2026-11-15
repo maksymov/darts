@@ -78,7 +78,12 @@
     grid.classList.remove('adaptive-players', 'fill-players');
     if (!compact) grid.classList.add('fill-players');
     const scrollOffset = window.scrollY + main.scrollTop;
-    const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY) - 8;
+    const controls = document.querySelector('.score-controls');
+    const controlsRect = controls?.getBoundingClientRect();
+    const controlsBottom = controlsRect && getComputedStyle(controls).position === 'fixed'
+      ? controlsRect.top + scrollOffset
+      : Infinity;
+    const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY, controlsBottom) - 8;
     const height = Math.max(0, available - grid.getBoundingClientRect().top - scrollOffset);
     if (count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
         (!compact || historyExpanded || history.getBoundingClientRect().bottom + scrollOffset <= available)) {
