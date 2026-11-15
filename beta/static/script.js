@@ -74,15 +74,17 @@
     grid.style.removeProperty('--player-columns');
     grid.style.removeProperty('--player-scale');
     grid.style.removeProperty('--player-height');
+    grid.style.removeProperty('--player-rows');
+    grid.style.removeProperty('--player-row-height');
     const count = grid.children.length;
     const compact = count === 2 || count === 3;
     const mobileLandscapeSectors = game.mode === 'sectors' && matchMedia('(max-width: 900px) and (orientation: landscape)').matches;
     const mobilePortraitSectors = game.mode === 'sectors' && matchMedia('(max-width: 600px) and (orientation: portrait)').matches;
     const scrollExtraSectorCards = mobileLandscapeSectors && count >= 7;
-    const fitTwoPortraitRows = mobilePortraitSectors && count >= 3;
+    const fitThreePortraitRows = mobilePortraitSectors && count >= 3;
     grid.classList.remove('adaptive-players', 'fill-players');
-    grid.classList.toggle('portrait-sector-players', fitTwoPortraitRows);
-    if (!compact && !scrollExtraSectorCards && !fitTwoPortraitRows) grid.classList.add('fill-players');
+    grid.classList.toggle('portrait-sector-players', fitThreePortraitRows);
+    if (!compact && !mobileLandscapeSectors && !fitThreePortraitRows) grid.classList.add('fill-players');
     const scrollOffset = window.scrollY + main.scrollTop;
     const controls = document.querySelector('.score-controls') || (game.mode === 'sectors' ? document.querySelector('.game-sidebar') : null);
     const controlsRect = controls?.getBoundingClientRect();
@@ -91,8 +93,8 @@
       : Infinity;
     const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY, controlsBottom) - 8;
     const height = Math.max(0, available - grid.getBoundingClientRect().top - scrollOffset);
-    if (fitTwoPortraitRows) grid.style.setProperty('--player-height', `${height}px`);
-    if (!mobileLandscapeSectors && !fitTwoPortraitRows && count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
+    if (fitThreePortraitRows) grid.style.setProperty('--player-height', `${height}px`);
+    if (!mobileLandscapeSectors && !fitThreePortraitRows && count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
         (!compact || historyExpanded || history.getBoundingClientRect().bottom + scrollOffset <= available)) {
       if (!compact) grid.style.setProperty('--player-height', `${height}px`);
       restoreScroll();
@@ -100,24 +102,32 @@
     }
     grid.classList.add('adaptive-players');
     const desired = count === 9 ? 3 : Math.ceil(Math.sqrt(count * 1.6));
-    const maxColumns = Math.min(count, fitTwoPortraitRows ? 2 : mobileLandscapeSectors ? 3 : 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
+    const maxColumns = Math.min(count, fitThreePortraitRows || (mobileLandscapeSectors && count < 7) ? 2 : mobileLandscapeSectors ? 3 : 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
     const center = Math.min(desired, maxColumns);
     const columnsToTry = Array.from(new Set([center, center - 1, center + 1, center - 2, center + 2, maxColumns, maxColumns - 1]))
       .filter(columns => columns >= 1 && columns <= maxColumns);
-    const scales = scrollExtraSectorCards || fitTwoPortraitRows ? [1, .9, .8] : count === 9
+    const scales = scrollExtraSectorCards || fitThreePortraitRows || mobileLandscapeSectors ? [1] : count === 9
       ? [3, 2.8, 2.6, 2.4, 2.2, 2, 1.8, 1.6, 1.4, 1.2, 1, .9, .8, .7, .6, .5, .4, .3]
       : [1, .9, .8, .7, .6, .5, .4, .3];
     let best = null, preferred = null;
     for (const columns of columnsToTry) {
       grid.style.setProperty('--player-columns', columns);
+      if (fitThreePortraitRows) {
+        const rows = Math.min(3, Math.ceil(count / columns));
+        const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+        grid.style.setProperty('--player-rows', rows);
+        grid.style.setProperty('--player-row-height', `${Math.max(0, (height - gap * (rows - 1)) / rows)}px`);
+      }
       const measurements = [];
       function measure(index) {
         if (measurements[index]) return measurements[index];
         const scale = scales[index];
         grid.style.setProperty('--player-scale', `${16 * scale}px`);
         const gridRect = grid.getBoundingClientRect();
-        const visibleCardsBottom = scrollExtraSectorCards || fitTwoPortraitRows
-          ? grid.children[Math.min(count, columns * 2) - 1].getBoundingClientRect().bottom
+        const portraitRows = fitThreePortraitRows ? Math.min(3, Math.ceil(count / columns)) : 3;
+        const visibleRows = scrollExtraSectorCards ? 2 : fitThreePortraitRows ? portraitRows : 0;
+        const visibleCardsBottom = visibleRows
+          ? grid.children[Math.min(count, columns * visibleRows) - 1].getBoundingClientRect().bottom
           : gridRect.bottom;
         const bottom = visibleCardsBottom + window.scrollY + main.scrollTop;
         const cardsFit = bottom <= available;
@@ -144,7 +154,13 @@
     if (preferred && preferred.cardsFit) best = preferred;
     grid.style.setProperty('--player-columns', best.columns);
     grid.style.setProperty('--player-scale', `${16 * best.scale}px`);
-    if (!compact && !scrollExtraSectorCards && !fitTwoPortraitRows && best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
+    if (fitThreePortraitRows) {
+      const rows = Math.min(3, Math.ceil(count / best.columns));
+      const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+      grid.style.setProperty('--player-rows', rows);
+      grid.style.setProperty('--player-row-height', `${Math.max(0, (height - gap * (rows - 1)) / rows)}px`);
+    }
+    if (!compact && !mobileLandscapeSectors && !fitThreePortraitRows && best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
     restoreScroll();
   }
   let resizeTimer;
