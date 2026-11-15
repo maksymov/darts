@@ -18,7 +18,7 @@
   let commentator = storage.getItem('darts.commentator') === null ? effects : storage.getItem('darts.commentator') !== 'false';
   let comment = idleComment('', game ? game.players.find(p=>p.id===game.activeId).name : ''), lastCommentAt = 0, cardRequest = 0, cardExport = null;
   let draft = { mode: 'x01', total: 501, players: game ? game.players.map(p => ({ name:p.name, avatar:p.avatar })) : [{name:'Игрок 1',avatar:'🎯'},{name:'Игрок 2',avatar:'⚡'}] };
-  let modalType = '', modalData = {}, returnFocus = '', toastTimer;
+  let modalType = '', modalData = {}, returnFocus = '', toastTimer, commentatorToastTimer;
   const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
   const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
   function persist() {
@@ -33,6 +33,7 @@
     document.documentElement.classList.add('tv');
     document.documentElement.classList.toggle('game-active', view === 'game' && !!game && !G.finished(game));
     document.documentElement.classList.toggle('tv-results', view === 'game' && !!game && G.finished(game));
+    document.documentElement.classList.toggle('score-entry-active', view === 'game' && !!$('score-input'));
     document.documentElement.classList.toggle('nine-players-game', view === 'game' && !!game && game.players.length === 9);
     document.documentElement.classList.toggle('compact-players-game', view === 'game' && !!game && (game.players.length === 2 || game.players.length === 3));
     document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
@@ -168,7 +169,7 @@
   function plural(n,a,b,c) { return n%10===1&&n%100!==11?a:n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?b:c; }
   function keypadHTML(inDialog) { return `<div class="keypad" aria-label="Цифровая панель">${['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(v=>`<button ${v==='5'?'id="'+(inDialog?'dialog-five':'key-five')+'"':''} data-action="digit" data-value="${v}" ${v==='clear'||v==='delete'?'class="small-key"':''} aria-label="${v==='clear'?'Очистить ввод':v==='delete'?'Удалить последнюю цифру':v}">${v==='clear'?'Сброс':v==='delete'?'⌫':v}</button>`).join('')}</div>`; }
   function controllerHTML(active) {
-    return `<aside class="controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="none" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" readonly></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
+    return `<aside class="controller"><div class="score-controls"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="none" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" readonly></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
   }
   function sectorControllerHTML(active) {
     return `<aside class="controller sector-controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>По секторам</span></div><div class="dartboard">${dartboardSVG(G.SECTORS[active.progress])}</div><div class="sector-side"><p class="sector-target">Ваша цель <strong>${G.SECTORS[active.progress]===50?'Яблочко · 50':G.SECTORS[active.progress]===25?'Внешний центр · 25':'Сектор '+G.SECTORS[active.progress]}</strong></p><div class="sector-buttons"><button id="sector-hit" class="primary" data-action="hit">✓ Попал! Следующий сектор</button><button data-action="sector-miss">Передать ход →</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}</aside>`;
@@ -229,12 +230,26 @@
     if(!commentator)return '';
     const win=G.winner(game);
     const winners=G.winners(game), resultEvent=winners.length>1?'draw':'win', resultNames=winners.map(p=>p.name).join(', ');
-    if(win && (comment.event!==resultEvent||comment.player!==resultNames))comment=E.commentFor(game,comment.text);
+    if(win && (comment.event!==resultEvent||comment.player!==resultNames)){comment=E.commentFor(game,comment.text);showMobileComment();}
     if(!win && (comment.event==='win'||comment.event==='draw')) {
       const active=game.players.find(p=>p.id===game.activeId);
       comment=idleComment(`${active.name}, пересчёт принят. Никто ничего не видел.`,active.name);
     }
     return `<aside class="donkey-commentator mood-${comment.mood}" aria-label="Ишак-комментатор"><div class="donkey-portrait" aria-hidden="true"><img src="static/img/ishak2.png" alt=""><span class="donkey-mood">${comment.mood==='proud'?'★':comment.mood==='amazed'?'!':comment.mood==='oops'?'?':'•'}</span></div><div class="donkey-copy"><div class="donkey-label">ИШАК ${esc(comment.label)}${comment.player?`<span> · ${esc(comment.player)}</span>`:''}</div><p>${esc(comment.text)}</p></div></aside>`;
+  }
+  function showMobileComment() {
+    if(!commentator||!window.matchMedia('(max-width:600px), (max-height:500px) and (orientation:landscape)').matches)return;
+    const notice=$('commentator-toast'), html=commentatorHTML();
+    if(!html)return;
+    clearTimeout(commentatorToastTimer);
+    notice.innerHTML=html;notice.hidden=false;
+    requestAnimationFrame(()=>notice.classList.add('visible'));
+    commentatorToastTimer=setTimeout(()=>{notice.classList.remove('visible');notice.hidden=true;notice.replaceChildren();},4000);
+  }
+  function hideMobileComment() {
+    clearTimeout(commentatorToastTimer);
+    $('commentator-toast').hidden=true;
+    $('commentator-toast').replaceChildren();
   }
   function updateComment() {
     if(!commentator)return;
@@ -242,7 +257,7 @@
     if(!next)return;
     const urgent=['win','draw','maximum','bust'].includes(next.event);
     if(!urgent&&Date.now()-lastCommentAt<6000)return;
-    comment=next;lastCommentAt=Date.now();
+    comment=next;lastCommentAt=Date.now();showMobileComment();
   }
   function releaseCard() {
     cardRequest++;
@@ -342,7 +357,7 @@
     if(action==='match-card'){openMatchCard();return;}
     if(action==='download-card'){downloadCard();return;}
     if(action==='share-card'){shareCard();return;}
-    if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));render();settingsDialog();focusTo(token(button));return;}
+    if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));if(!commentator)hideMobileComment();render();settingsDialog();focusTo(token(button));return;}
     if(action==='theme'){theme=value;storage.setItem('theme',theme);applyTheme();settingsDialog();focusTo(token(button));return;}
     if(action==='effects'){effects=!effects;storage.setItem('darts.effects',String(effects));settingsDialog();focusTo(token(button));return;}
     if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку; во время игры по секторам засчитывают попадание</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки в X01</span></div><div class="help-row"><strong>Точка на нампаде</strong><span>В секторах передаёт ход; в X01 переключает игрока без записи хода</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
