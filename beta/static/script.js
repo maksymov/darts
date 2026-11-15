@@ -188,9 +188,9 @@
     return `<div class="tv-game-toolbar"><h1>${esc(modeName(game))}</h1><div class="tv-game-tools"><button data-action="home" aria-label="Назад"><span aria-hidden="true">←</span><span class="tv-game-tool-label"> Назад</span></button><button data-action="restart" aria-label="Заново" title="Начать заново"><span aria-hidden="true">⟳</span><span class="tv-game-tool-label"> Заново</span></button><button data-action="shuffle-players" aria-label="Перемешать игроков" ${game.turns.length||win||rows.length<2?'disabled':''} title="${game.turns.length||win?'Перемешивание доступно только до первого хода':'Перемешать игроков'}"><svg class="toolbar-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span class="tv-game-tool-label"> Перемешать</span></button><button class="primary" data-action="add-match-player" aria-label="Добавить игрока"><span aria-hidden="true">＋</span><span class="tv-game-tool-label"> Игрок</span></button></div></div><div class="match-top"><div><div class="eyebrow"><span class="live-dot"></span> ${complete?'ПАРТИЯ ЗАВЕРШЕНА':'ИГРА ИДЁТ'}</div><div class="match-meta"><h1>${esc(modeName(game))}</h1><span class="pill">${complete?'Финиш':'Круг '+round}</span></div></div><div class="match-tools"><button class="quiet-button" data-action="home">← <span class="new-game-label">Новая игра</span><span class="mobile-menu-label">Меню</span></button><button class="icon-button" data-action="match-menu" aria-label="Меню партии">⋯</button></div></div>${winBanner}<div class="game-layout ${rows.length>4?'many-players-layout':''}"><div class="scoreboard"><div class="players-grid ${rows.length>4?'many-players':''} ${gridClass}">${cards}</div></div><div class="game-sidebar">${controller}${win?commentatorHTML():''}</div><section class="history ${rows.length>4?'many-players-history':''}"><div class="section-head"><h2>История партии</h2><span>Нажмите на ход, чтобы исправить</span></div>${historyHTML()}</section></div>`;
   }
   function plural(n,a,b,c) { return n%10===1&&n%100!==11?a:n%10>=2&&n%10<=4&&(n%100<12||n%100>14)?b:c; }
-  function keypadHTML(inDialog) { return `<div class="keypad" aria-label="Цифровая панель">${['1','2','3','4','5','6','7','8','9','clear','0','delete'].map(v=>`<button ${v==='5'?'id="'+(inDialog?'dialog-five':'key-five')+'"':''} data-action="digit" data-value="${v}" ${v==='clear'||v==='delete'?'class="small-key"':''} aria-label="${v==='clear'?'Очистить ввод':v==='delete'?'Удалить последнюю цифру':v}">${v==='clear'?'Сброс':v==='delete'?'⌫':v}</button>`).join('')}</div>`; }
+  function keypadHTML(inDialog) { const clearKey=inDialog?'clear':'plus';return `<div class="keypad" aria-label="Цифровая панель">${['1','2','3','4','5','6','7','8','9',clearKey,'0','delete'].map(v=>`<button ${v==='5'?'id="'+(inDialog?'dialog-five':'key-five')+'"':''} data-action="digit" data-value="${v}" ${v==='clear'||v==='delete'?'class="small-key"':''} aria-label="${v==='clear'?'Очистить ввод':v==='plus'?'Добавить знак плюс':v==='delete'?'Удалить последнюю цифру':v}">${v==='clear'?'Сброс':v==='plus'?'+':v==='delete'?'⌫':v}</button>`).join('')}</div>`; }
   function controllerHTML(active) {
-    return `<aside class="controller"><div class="score-controls"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="none" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Очки за ход, от 0 до 180" placeholder="—" value="${buffer}" readonly></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
+    return `<aside class="controller"><div class="score-controls"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>3 дротика</span></div><label class="score-display"><span>Очки<br>за ход</span><input id="score-input" type="text" inputmode="none" pattern="[0-9+]*" maxlength="11" autocomplete="off" aria-label="Очки за ход, например 12+8+24" placeholder="—" value="${buffer}" readonly></label>${keypadHTML()}<button id="submit-score" class="primary submit-score" data-action="submit">Записать ход →</button><div class="visit-actions"><button data-action="miss">Промах · 0</button><button data-action="bust">Перебор</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}<div class="controller-foot">Цифры на клавиатуре тоже работают · Enter ↵</div></aside>`;
   }
   function sectorControllerHTML(active) {
     return `<aside class="controller sector-controller"><div class="controller-heading"><strong>Ход: ${esc(active.name)}</strong><span>По секторам</span></div><div class="dartboard">${dartboardSVG(G.SECTORS[active.progress])}</div><div class="sector-side"><p class="sector-target">Ваша цель <strong>${G.SECTORS[active.progress]===50?'Яблочко · 50':G.SECTORS[active.progress]===25?'Внешний центр · 25':'Сектор '+G.SECTORS[active.progress]}</strong></p><div class="sector-buttons"><button id="sector-hit" class="primary" data-action="hit">✓ Попал! Следующий сектор</button><button data-action="sector-miss">Передать ход →</button></div><button class="undo-button" data-action="undo" ${!game.turns.length?'disabled':''}>↶ Отменить последний ход</button></div>${commentatorHTML()}</aside>`;
@@ -346,7 +346,7 @@
   }
   function digit(value) {
     const input=$('modal').hidden?$('score-input'):$('dialog-number');if(!input)return;
-    let next=input.value;if(value==='clear')next='';else if(value==='delete')next=next.slice(0,-1);else if(next.length<Number(input.maxLength))next=(next==='0'?'':next)+value;
+    let next=input.value;if(value==='clear')next='';else if(value==='delete')next=next.slice(0,-1);else if(value==='plus'){if(input.id!=='score-input'||!/\d$/.test(next)||next.split('+').length>=3||next.length>=Number(input.maxLength))return;next+='+';}else if(next.length<Number(input.maxLength))next=(next==='0'?'':next)+value;
     input.value=next;if($('modal').hidden)buffer=next;
   }
   function skipPlayer() {
@@ -366,7 +366,8 @@
     const from=key==='Backspace'&&start===end?start-previous.length:start;
     const to=key==='Delete'&&start===end?end+next.length:end;
     const text=key==='Backspace'||key==='Delete'?'':key;
-    if(field.value.length-(to-from)+text.length<=field.maxLength)field.setRangeText(text,from,to,'end');
+    const candidate=field.value.slice(0,from)+text+field.value.slice(to);
+    if(candidate.length<=field.maxLength&&(field.id!=='score-input'||(/^\d*(?:\+\d*)*$/.test(candidate)&&candidate.split('+').length<=3)))field.setRangeText(text,from,to,'end');
     if(field.id==='score-input')buffer=field.value;
   }
   function startGame() { game=G.create(draft.mode,draft.total,draft.players);comment=idleComment('',game.players[0].name);lastCommentAt=0;view='game';buffer='';historyExpanded=false;persist();render(game.mode==='x01'?'key-five':'sector-hit',false);announce('Партия началась. Ходит '+game.players[0].name); }
@@ -405,7 +406,7 @@
     if(action==='confirm-start'){closeModal();startGame();return;}
     if(action==='resume'){view='game';render(G.winner(game)?'match-card-open':game.mode==='x01'?'key-five':'sector-hit');return;}
     if(action==='digit'){digit(value);return;}
-    if(action==='submit'){if(buffer===''){toast('Введите очки или нажмите «Промах».');return;}record(Number(buffer),'score');return;}
+    if(action==='submit'){if(buffer===''){toast('Введите очки или нажмите «Промах».');return;}if(!/^\d+(?:\+\d+){0,2}$/.test(buffer)){toast('Введите сумму до трёх бросков, например 12+8+24.');return;}record(buffer.split('+').reduce((sum,score)=>sum+Number(score),0),'score');return;}
     if(action==='miss'){record(0,'score');return;}
     if(action==='bust'){record(0,'bust');return;}
     if(action==='hit'){record(0,'hit');return;}
@@ -428,7 +429,7 @@
     if(action==='rematch'||action==='confirm-restart'){const old=game;game=G.create(old.mode,old.total,old.players);comment=idleComment('Реванш? Вот это я понимаю — характер.');lastCommentAt=0;buffer='';persist();if(!$('modal').hidden)closeModal();render(game.mode==='x01'?'key-five':'sector-hit');return;}
   }
   document.addEventListener('click',event=>{const b=event.target.closest('button[data-action]');if(b&&!b.disabled)handleAction(b);});
-  document.addEventListener('input',event=>{if(event.target.id==='score-input'){event.target.value=event.target.value.replace(/\D/g,'').slice(0,3);buffer=event.target.value;}if(event.target.id==='dialog-number')event.target.value=event.target.value.replace(/\D/g,'').slice(0,modalType==='custom'?4:3);});
+  document.addEventListener('input',event=>{if(event.target.id==='score-input'){let value='';for(const char of event.target.value){if(/\d/.test(char)&&value.length<11)value+=char;else if(char==='+'&&/\d$/.test(value)&&value.split('+').length<3&&value.length<11)value+=char;}event.target.value=value;buffer=value;}if(event.target.id==='dialog-number')event.target.value=event.target.value.replace(/\D/g,'').slice(0,modalType==='custom'?4:3);});
   function moveFocus(direction) {
     const scope=$('modal').hidden?document:$('modal'),list=controls(scope).filter(el=>!el.classList.contains('skip-link'));
     const current=document.activeElement;
@@ -472,7 +473,7 @@
       event.preventDefault();if(!event.repeat)skipPlayer();return;
     }
     if((event.target.id==='player-name' && event.target.readOnly && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
-       (['score-input','dialog-number'].includes(event.target.id) && (key==='Backspace'||key==='Delete'||/^\d$/.test(key)))) {
+       (['score-input','dialog-number'].includes(event.target.id) && (key==='Backspace'||key==='Delete'||/^\d$/.test(key)||(event.target.id==='score-input'&&key==='+')))) {
       editReadOnlyInput(event.target,key);
       event.preventDefault();return;
     }
