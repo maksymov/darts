@@ -212,16 +212,24 @@
   }
   function closeModal() {
     if(modalType==='card')releaseCard();
-    document.querySelector('.dialog').classList.remove('match-card-dialog');
+    document.querySelector('.dialog').classList.remove('match-card-dialog','native-name-input');
     $('modal').hidden=true;modalType='';modalData={};$('main').removeAttribute('aria-hidden');
     document.querySelectorAll('[inert]').forEach(el=>el.inert=false);document.body.style.overflow='';focusTo(returnFocus);
   }
   function confirmAction(title,text,action) { openModal(title,`<p>${esc(text)}</p><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="${action}">Да, продолжить</button></div>`,'confirm'); }
   function nameDialog(index,source,pendingPlayer) {
     const p=pendingPlayer||(source==='draft'?draft.players[index]:game.players.find(p=>p.id===index));
-    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" inputmode="none" readonly value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru')}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
+    const nativeKeyboard=matchMedia('(max-width: 900px) and (pointer: coarse)').matches;
+    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" ${nativeKeyboard?'inputmode="text"':'inputmode="none" readonly'} value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru',!p.name.length)}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
+    document.querySelector('.dialog').classList.toggle('native-name-input',nativeKeyboard);
   }
-  function lettersHTML(lang) { return `<div class="name-keyboard" aria-label="Буквы имени">${(lang==='ru'?'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ':'ABCDEFGHIJKLMNOPQRSTUVWXYZ').split('').map(c=>`<button data-action="letter" data-value="${c}">${c}</button>`).join('')}<button class="wide" data-action="letter" data-value="space">Пробел</button><button class="wide" data-action="letter" data-value="delete">⌫</button><button class="wide" data-action="letter" data-value="clear">Очистить</button><button class="wide" data-action="alphabet">${lang==='ru'?'ABC':'АБВ'}</button></div>`; }
+  function lettersHTML(lang,uppercase=true) { return `<div class="name-keyboard" aria-label="Буквы имени">${(lang==='ru'?'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ':'ABCDEFGHIJKLMNOPQRSTUVWXYZ').split('').map(c=>{const letter=uppercase?c:c.toLowerCase();return `<button data-action="letter" data-value="${letter}">${letter}</button>`;}).join('')}<button class="wide" data-action="letter" data-value="space">Пробел</button><button class="wide" data-action="letter" data-value="delete">⌫</button><button class="wide" data-action="letter" data-value="clear">Очистить</button><button class="wide" data-action="alphabet">${lang==='ru'?'ABC':'АБВ'}</button></div>`; }
+  function setNameKeyboardCase(uppercase) {
+    document.querySelectorAll('#letter-board .name-keyboard button[data-action="letter"]:not(.wide)').forEach(button=>{
+      const letter=button.textContent.toUpperCase(),value=uppercase?letter:letter.toLowerCase();
+      button.textContent=value;button.dataset.value=value;
+    });
+  }
   function numberDialog(title,value,type,data) {
     openModal(title,`<label class="field-label" for="dialog-number">${type==='custom'?'Стартовый счёт от 1 до 9999':'Очки за ход: от 0 до 180'}</label><label class="score-display"><input id="dialog-number" aria-label="${type==='custom'?'Стартовый счёт':'Исправленный результат'}" inputmode="none" maxlength="${type==='custom'?4:3}" value="${value}" readonly></label>${keypadHTML(true)}<div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-number">Сохранить</button></div>${type==='edit'?'<button class="undo-button" data-action="edit-bust">Отметить как перебор</button>':''}`,type,data);
   }
@@ -374,8 +382,8 @@
     if(action==='edit-draft'){nameDialog(Number(player),'draft');return;}
     if(action==='avatar'){modalData.avatar=value;document.querySelectorAll('.avatar-picker button').forEach(b=>{b.classList.toggle('selected',b.dataset.value===value);b.setAttribute('aria-pressed',String(b.dataset.value===value));});return;}
     if(action==='toggle-letters'){$('letter-board').hidden=!$('letter-board').hidden;return;}
-    if(action==='alphabet'){modalData.lang=modalData.lang==='ru'?'en':'ru';$('letter-board').innerHTML=lettersHTML(modalData.lang);focusTo('alphabet|||');return;}
-    if(action==='letter'){const input=$('player-name');if(value==='delete')input.value=Array.from(input.value).slice(0,-1).join('');else if(value==='clear')input.value='';else if(input.value.length<24)input.value+=value==='space'?' ':value;return;}
+    if(action==='alphabet'){modalData.lang=modalData.lang==='ru'?'en':'ru';$('letter-board').innerHTML=lettersHTML(modalData.lang,!$('player-name').value.length);focusTo('alphabet|||');return;}
+    if(action==='letter'){const input=$('player-name');if(value==='delete')input.value=Array.from(input.value).slice(0,-1).join('');else if(value==='clear')input.value='';else if(input.value.length<24)input.value+=value==='space'?' ':value;setNameKeyboardCase(!input.value.length);return;}
     if(action==='save-name'){const name=$('player-name').value.trim();if(!name){toast('Введите имя или оставьте «Игрок».');return;}const p=modalData.source==='new-draft'||modalData.source==='new-game'?modalData.player:modalData.source==='draft'?draft.players[modalData.index]:game.players.find(p=>p.id===modalData.index);p.name=name.slice(0,24);p.avatar=modalData.avatar;if(modalData.source==='new-draft')draft.players.push(p);else if(modalData.source==='new-game'){game.players.push(p);persist();}else if(modalData.source==='game')persist();closeModal();render(returnFocus);return;}
     if(action==='start'){if(game&&game.turns.length&&!G.winner(game))confirmAction('Начать новую партию?','Сохранённая партия будет заменена. Можно отменить и продолжить её.','confirm-start');else startGame();return;}
     if(action==='confirm-start'){closeModal();startGame();return;}
@@ -447,7 +455,7 @@
     if(decimal && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='x01' && (!G.winner(game)||game.finishingRound&&!G.finished(game))){
       event.preventDefault();if(!event.repeat)skipPlayer();return;
     }
-    if((event.target.id==='player-name' && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
+    if((event.target.id==='player-name' && event.target.readOnly && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
        (['score-input','dialog-number'].includes(event.target.id) && (key==='Backspace'||key==='Delete'||/^\d$/.test(key)))) {
       editReadOnlyInput(event.target,key);
       event.preventDefault();return;
