@@ -305,6 +305,15 @@
     let next=input.value;if(value==='clear')next='';else if(value==='delete')next=next.slice(0,-1);else if(next.length<Number(input.maxLength))next=(next==='0'?'':next)+value;
     input.value=next;if($('modal').hidden)buffer=next;
   }
+  function skipPlayer() {
+    if(buffer){toast('Сначала запишите или очистите введённые очки.');return;}
+    try { G.skipPlayer(game); } catch(error) { toast(error.message);return; }
+    persist();
+    const name=game.players.find(p=>p.id===game.activeId).name;
+    render('key-five',false);
+    announce('Очередь передана. Сейчас ходит '+name+'.');
+    toast('Сейчас ходит '+name+'. Ход не записан.');
+  }
   function editReadOnlyInput(field, key) {
     const start=field.selectionStart,end=field.selectionEnd;
     if(start===null||end===null)return;
@@ -336,7 +345,7 @@
     if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));render();settingsDialog();focusTo(token(button));return;}
     if(action==='theme'){theme=value;storage.setItem('theme',theme);applyTheme();settingsDialog();focusTo(token(button));return;}
     if(action==='effects'){effects=!effects;storage.setItem('darts.effects',String(effects));settingsDialog();focusTo(token(button));return;}
-    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку; во время игры по секторам засчитывают попадание</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки в X01</span></div><div class="help-row"><strong>Точка на нампаде</strong><span>Передаёт ход в игре по секторам</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
+    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку; во время игры по секторам засчитывают попадание</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки в X01</span></div><div class="help-row"><strong>Точка на нампаде</strong><span>В секторах передаёт ход; в X01 переключает игрока без записи хода</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
     if(action==='about'){openModal('Дартс. Ваш домашний клуб.',`<p>Счёт для игр с друзьями, без регистрации. Текущая партия хранится только в этом браузере.</p><div class="menu-stack"><a href="https://github.com/maksymov/darts" target="_blank" rel="noopener">Код проекта на GitHub ↗</a><a href="https://vk.com/maksymov.vlad" target="_blank" rel="noopener">Автор ВКонтакте ↗</a><a href="https://t.me/MaKcuMoB" target="_blank" rel="noopener">Написать автору ↗</a><a href="https://yoomoney.ru/to/410011276146968" target="_blank" rel="noopener">Поддержать проект ↗</a></div>`,'about');return;}
     if(action==='mode'){draft.mode=value;draft.total=Number(button.dataset.total);render(token(button));return;}
     if(action==='custom-total'){numberDialog('Свой стартовый счёт',draft.total,'custom');return;}
@@ -414,6 +423,9 @@
     if(key==='Escape'||key==='BrowserBack'||key==='GoBack'){event.preventDefault();back();return;}
     if((decimal||key==='Enter') && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
       event.preventDefault();if(!event.repeat)record(0,decimal?'miss':'hit');return;
+    }
+    if(decimal && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='x01' && (!G.winner(game)||game.finishingRound&&!G.finished(game))){
+      event.preventDefault();if(!event.repeat)skipPlayer();return;
     }
     if((event.target.id==='player-name' && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
        (['score-input','dialog-number'].includes(event.target.id) && (key==='Backspace'||key==='Delete'||/^\d$/.test(key)))) {

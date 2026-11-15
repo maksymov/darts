@@ -44,6 +44,23 @@ function run() {
     g.finishingRound=true;G.record(g,8);G.undo(g);
     assert.deepEqual(G.pendingFinish(g),['p1','p2']);assert.equal(g.activeId,'p1');assert.equal(G.finished(g),false);
   });
+  check('Skipping in X01 changes only the active player and does not create a visit',()=>{
+    const g=G.create('x01',501,players);const rows=G.standings(g);
+    G.skipPlayer(g);assert.equal(g.activeId,'p1');assert.equal(g.turns.length,0);assert.deepEqual(G.standings(g),rows);
+    G.record(g,60);assert.equal(g.turns[0].playerId,'p1');G.undo(g);assert.equal(g.activeId,'p1');
+    assert.throws(()=>G.skipPlayer(G.create('x01',501,[players[0]])));
+    assert.throws(()=>G.skipPlayer(G.create('sectors',501,players)));
+  });
+  check('Postponed final turns remain pending across undo, edit and persistence',()=>{
+    const g=G.create('x01',8,[...players,{name:'Вера'},{name:'Глеб'}]);G.record(g,8);
+    assert.throws(()=>G.skipPlayer(g));g.finishingRound=true;
+    G.skipPlayer(g);assert.deepEqual(G.pendingFinish(g),['p2','p3','p1']);assert.equal(g.activeId,'p2');
+    const saved=JSON.parse(JSON.stringify(g));assert.ok(G.valid(saved));assert.deepEqual(G.pendingFinish(saved),['p2','p3','p1']);
+    G.record(saved,8);G.undo(saved);assert.deepEqual(G.pendingFinish(saved),['p2','p3','p1']);assert.equal(saved.activeId,'p2');
+    G.record(saved,8);G.edit(saved,1,8);assert.deepEqual(G.pendingFinish(saved),['p3','p1']);assert.equal(saved.activeId,'p3');
+    G.record(saved,0);assert.equal(saved.activeId,'p1');assert.throws(()=>G.skipPlayer(saved));
+    G.record(saved,8);assert.equal(G.finished(saved),true);assert.deepEqual(G.winners(saved).map(p=>p.id),['p0','p1','p2']);
+  });
   check('Invalid input cannot mutate the game',()=>{
     const g=G.create('x01',501,players);for(const n of [-1,181,1.5,NaN,Infinity])assert.throws(()=>G.record(g,n));assert.equal(g.turns.length,0);
   });

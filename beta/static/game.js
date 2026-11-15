@@ -75,6 +75,8 @@
   }
   function reconcileFinish(game) {
     const found = findWinner(game);
+    const previousWinner = game.winnerId, previousFinishIndex = game.finishTurnIndex;
+    const previousQueue = pendingFinish(game);
     clearFinish(game);
     if (!found) return;
     game.winnerId = found.id;
@@ -94,10 +96,31 @@
       playedAfterWin.splice(playedIndex, 1);
       return false;
     });
+    if (previousWinner === found.id && previousFinishIndex === found.turnIndex) {
+      game.finishQueue = previousQueue.filter(id => game.finishQueue.includes(id))
+        .concat(game.finishQueue.filter(id => !previousQueue.includes(id)));
+    }
     if (game.finishQueue.length) {
       game.finishingRound = true;
-      if (!game.finishQueue.includes(game.activeId)) game.activeId = game.finishQueue[0];
+      game.activeId = game.finishQueue[0];
     }
+  }
+  function skipPlayer(game) {
+    if (game.mode !== 'x01') throw new Error('Переключение доступно только в X01.');
+    const win = winner(game);
+    if (win) {
+      if (!game.finishingRound || !game.finishQueue.length) throw new Error('Сначала начните доигрывать круг.');
+      if (game.activeId !== game.finishQueue[0]) throw new Error('Сейчас ходит другой игрок.');
+      if (game.finishQueue.length < 2) throw new Error('Остался только один игрок для доигрывания круга.');
+      game.finishQueue.push(game.finishQueue.shift());
+      game.activeId = game.finishQueue[0];
+    } else {
+      if (game.players.length < 2) throw new Error('В партии только один игрок.');
+      const index = game.players.findIndex(p => p.id === game.activeId);
+      if (index < 0) throw new Error('Выберите игрока.');
+      game.activeId = game.players[(index + 1) % game.players.length].id;
+    }
+    return game;
   }
   function record(game, score, kind) {
     const currentWinner = winner(game);
@@ -137,9 +160,7 @@
       game.activeId = turn.playerId;
       if (index === game.finishTurnIndex) clearFinish(game);
       else if (game.winnerId && index > game.finishTurnIndex && game.finishOrder.includes(turn.playerId)) {
-        const orderIndex = game.finishOrder.indexOf(turn.playerId);
-        const queueIndex = game.finishQueue.findIndex(id => game.finishOrder.indexOf(id) > orderIndex);
-        if (!game.finishQueue.includes(turn.playerId)) game.finishQueue.splice(queueIndex < 0 ? game.finishQueue.length : queueIndex, 0, turn.playerId);
+        if (!game.finishQueue.includes(turn.playerId)) game.finishQueue.unshift(turn.playerId);
       }
     }
     return game;
@@ -186,5 +207,5 @@
       Array.isArray(game.players) && game.players.length > 0 && game.players.every(p => p && typeof p.id === 'string' && typeof p.name === 'string') &&
       game.players.some(p => p.id === game.activeId) && Array.isArray(game.turns) && game.turns.every(t => t && Number.isFinite(t.score) && t.score >= 0 && game.players.some(p => p.id === t.playerId));
   }
-  return { SECTORS, AVATARS, create, standings, winner, winners, pendingFinish, finished, record, undo, edit, reconcileFinish, migrate, valid };
+  return { SECTORS, AVATARS, create, standings, winner, winners, pendingFinish, finished, skipPlayer, record, undo, edit, reconcileFinish, migrate, valid };
 });
