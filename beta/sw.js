@@ -1,6 +1,6 @@
-const CACHE_NAME = 'darts-beta-cache-2026-11-15-app-icon-v51';
+const CACHE_NAME = 'darts-beta-cache-2026-11-15-responsive-rows-v52';
 const urlsToCache = [
-  './', './index.html', './static/game.js', './static/match-extras.js', './static/match-card.js', './static/script.js', './static/style.css',
+  './', './index.html', './static/game.js', './static/layout.js', './static/dialog.css', './static/game-layout.css', './static/match-extras.js', './static/match-card.js', './static/script.js', './static/style.css',
   './static/manifest.json', './static/img/icon-192x192.png',
   './static/img/icon-512x512.png', './static/img/apple-touch-icon.png',
   './static/img/ishak2.png', './favicon.ico'
