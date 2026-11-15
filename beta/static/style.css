@@ -90,8 +90,8 @@
 .tv-game-toolbar{display:none}
 .tv.game-active .tv-game-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 308px 16px 0}
 .tv.game-active .tv-game-toolbar h1{font-size:clamp(20px,2vw,30px);letter-spacing:-.5px}
-.tv.game-active .tv-game-tools{display:flex;align-items:center;gap:12px}
-.tv.game-active .tv-game-tools button{min-height:44px;padding:8px 12px;white-space:nowrap}
+.tv.game-active .tv-game-tools{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
+.tv.game-active .tv-game-tools button{display:inline-flex;flex:0 0 auto;align-items:center;gap:6px;min-height:44px;padding:8px 12px;white-space:nowrap}
 .tv.game-active .tv-game-tools .toolbar-icon{width:20px;height:20px;flex:none}
 .tv.game-active .match-top{display:none}
 .tv.game-active .win-banner{margin-right:308px}
@@ -121,7 +121,7 @@
   .tv.game-active body{height:auto;min-height:100vh;overflow:auto}
   .tv.game-active main{display:block;min-height:0;overflow:visible;padding:16px 0}
   .tv.game-active .tv-game-toolbar{flex-wrap:wrap;margin:0 0 16px}
-  .tv.game-active .tv-game-tools{flex-wrap:wrap;gap:8px}
+  .tv.game-active .tv-game-tools{flex-wrap:nowrap;gap:8px}
   .tv.game-active .tv-game-tools button{min-height:42px}
   .tv.game-active .game-layout{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto;gap:16px;padding-right:0}
   .tv.game-active .game-sidebar{position:static;width:auto;height:auto;overflow:visible}
@@ -147,7 +147,7 @@
   .tv.game-active .donkey-copy p{font-size:12px}
 }
 @media(min-width:901px) and (max-width:1000px){
-  .tv.game-active .tv-game-toolbar{flex-wrap:wrap}
+  .tv.game-active .tv-game-toolbar{flex-wrap:nowrap}
   .tv.game-active .tv-game-tools{gap:6px}
   .tv.game-active .tv-game-tools button{padding-right:8px;padding-left:8px}
 }
@@ -423,8 +423,9 @@
 }
 @media(max-width:600px) and (orientation:portrait){
   .tv.game-active .tv-game-toolbar{flex-wrap:nowrap;gap:0;margin-bottom:8px}
-  .tv.game-active .tv-game-toolbar h1{display:none}
-  .tv.game-active .tv-game-tools{flex-wrap:nowrap;gap:8px}
+  .tv.game-active .tv-game-toolbar h1{display:block;flex:1 1 0;min-width:0;margin-right:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(14px,4vw,18px);letter-spacing:0}
+  .tv.game-active .tv-game-tools{flex-wrap:nowrap;gap:4px}
+  .tv.game-active .tv-game-tools button{min-width:36px;min-height:38px;padding:6px}
   .tv.game-active.score-entry-active{--mobile-score-height:clamp(190px,36vh,300px);scroll-padding-bottom:calc(var(--mobile-score-height) + env(safe-area-inset-bottom,0px) + 12px)}
   .tv.game-active.score-entry-active main{padding-bottom:calc(var(--mobile-score-height) + env(safe-area-inset-bottom,0px) + 24px)}
   .tv.game-active.score-entry-active .game-sidebar .controller{display:contents}
