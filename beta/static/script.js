@@ -336,7 +336,7 @@
     if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));render();settingsDialog();focusTo(token(button));return;}
     if(action==='theme'){theme=value;storage.setItem('theme',theme);applyTheme();settingsDialog();focusTo(token(button));return;}
     if(action==='effects'){effects=!effects;storage.setItem('darts.effects',String(effects));settingsDialog();focusTo(token(button));return;}
-    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку; во время игры по секторам засчитывают попадание</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки; 0 передаёт ход в игре по секторам</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
+    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку; во время игры по секторам засчитывают попадание</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки в X01</span></div><div class="help-row"><strong>Точка на нампаде</strong><span>Передаёт ход в игре по секторам</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
     if(action==='about'){openModal('Дартс. Ваш домашний клуб.',`<p>Счёт для игр с друзьями, без регистрации. Текущая партия хранится только в этом браузере.</p><div class="menu-stack"><a href="https://github.com/maksymov/darts" target="_blank" rel="noopener">Код проекта на GitHub ↗</a><a href="https://vk.com/maksymov.vlad" target="_blank" rel="noopener">Автор ВКонтакте ↗</a><a href="https://t.me/MaKcuMoB" target="_blank" rel="noopener">Написать автору ↗</a><a href="https://yoomoney.ru/to/410011276146968" target="_blank" rel="noopener">Поддержать проект ↗</a></div>`,'about');return;}
     if(action==='mode'){draft.mode=value;draft.total=Number(button.dataset.total);render(token(button));return;}
     if(action==='custom-total'){numberDialog('Свой стартовый счёт',draft.total,'custom');return;}
@@ -393,15 +393,27 @@
   document.addEventListener('keydown',event=>{
     if(event.altKey||event.ctrlKey||event.metaKey)return;
     const map={37:'ArrowLeft',38:'ArrowUp',39:'ArrowRight',40:'ArrowDown',13:'Enter',27:'Escape',10009:'BrowserBack',461:'BrowserBack'};
+    const numberEntry=($('modal').hidden&&view==='game'&&game&&game.mode==='x01'&&!!$('score-input'))||['custom','edit'].includes(modalType);
+    const numpadCodes={45:'0',35:'1',40:'2',34:'3',37:'4',12:'5',39:'6',36:'7',38:'8',33:'9'};
+    let numpadDigit=null;
+    if(numberEntry){
+      if(/^Numpad[0-9]$/.test(event.code))numpadDigit=event.code.slice(-1);
+      else if(event.keyCode>=96&&event.keyCode<=105)numpadDigit=String(event.keyCode-96);
+      else if(event.location===3)numpadDigit=numpadCodes[event.keyCode]||null;
+    }
     const zero=event.key==='0'||event.code==='Numpad0'||event.keyCode===96||(event.keyCode===45&&event.location===3)||
       (event.keyCode===48&&(!event.key||event.key==='Unidentified'));
-    const key=zero?'0':map[event.keyCode]||event.key||'';
+    const numpadEnter=event.code==='NumpadEnter'||(event.location===3&&(event.keyCode===13||event.keyCode===108));
+    const decimal=event.code==='NumpadDecimal'||event.code==='NumpadComma'||
+      (event.location===3&&(event.keyCode===110||event.keyCode===46))||
+      event.key==='.'||event.key===','||event.key==='Decimal';
+    const key=numpadEnter||event.key==='Enter'?'Enter':numpadDigit!==null?numpadDigit:zero?'0':map[event.keyCode]||event.key||'';
     const input=event.target.tagName==='INPUT';
     const editing=input&&!event.target.readOnly;
     if(key==='Tab'&&!$('modal').hidden){const list=controls($('modal')),i=list.indexOf(document.activeElement);if(event.shiftKey&&i<=0){event.preventDefault();list[list.length-1].focus();}else if(!event.shiftKey&&i===list.length-1){event.preventDefault();list[0].focus();}return;}
     if(key==='Escape'||key==='BrowserBack'||key==='GoBack'){event.preventDefault();back();return;}
-    if((key==='0'||key==='Enter') && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
-      event.preventDefault();if(!event.repeat)record(0,key==='0'?'miss':'hit');return;
+    if((decimal||key==='Enter') && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
+      event.preventDefault();if(!event.repeat)record(0,decimal?'miss':'hit');return;
     }
     if((event.target.id==='player-name' && (key==='Backspace'||key==='Delete'||Array.from(key).length===1)) ||
        (['score-input','dialog-number'].includes(event.target.id) && (key==='Backspace'||key==='Delete'||/^\d$/.test(key)))) {
@@ -411,6 +423,9 @@
     if(key.indexOf('Arrow')===0){if(editing&&(key==='ArrowLeft'||key==='ArrowRight'))return;event.preventDefault();document.documentElement.classList.add('remote-navigation');moveFocus(key);return;}
     if(key==='Enter'){
       if(event.repeat){event.preventDefault();return;}
+      if(numpadEnter&&numberEntry&&$('modal').hidden&&buffer&&event.target.id!=='update-reload'){
+        event.preventDefault();handleAction($('submit-score'));return;
+      }
       if(input){event.preventDefault();if(event.target.id==='player-name')handleAction(document.querySelector('[data-action="save-name"]'));else if(event.target.id==='dialog-number')handleAction(document.querySelector('[data-action="save-number"]'));else if(event.target.id==='score-input')handleAction($('submit-score'));return;}
       if(event.key!=='Enter'&&event.target.tagName==='BUTTON'){event.preventDefault();event.target.click();}return;
     }

@@ -47,6 +47,13 @@ function run() {
   check('Invalid input cannot mutate the game',()=>{
     const g=G.create('x01',501,players);for(const n of [-1,181,1.5,NaN,Infinity])assert.throws(()=>G.record(g,n));assert.equal(g.turns.length,0);
   });
+  check('180 is accepted, 181 is rejected, and a valid 180 can still bust',()=>{
+    const g=G.create('x01',301,players);G.record(g,180);
+    assert.equal(G.standings(g)[0].remaining,121);assert.equal(g.activeId,'p1');
+    assert.throws(()=>G.record(g,181));assert.equal(g.turns.length,1);assert.equal(g.activeId,'p1');
+    G.record(g,0);G.record(g,180);assert.equal(G.standings(g)[0].remaining,121);assert.equal(G.standings(g)[0].last,'Перебор');
+    assert.throws(()=>G.edit(g,0,181));G.edit(g,0,180);assert.equal(g.turns[0].score,180);
+  });
   check('Editing history recalculates subsequent busts without moving the turn',()=>{
     const g=G.create('x01',100,players);G.record(g,80);G.record(g,20);G.record(g,50);assert.equal(G.standings(g)[0].remaining,20);
     G.edit(g,0,40);assert.equal(G.standings(g)[0].remaining,10);assert.equal(g.activeId,'p1');
