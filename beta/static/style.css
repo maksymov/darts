@@ -92,6 +92,7 @@
 .tv.game-active .tv-game-toolbar h1{font-size:clamp(20px,2vw,30px);letter-spacing:-.5px}
 .tv.game-active .tv-game-tools{display:flex;align-items:center;gap:12px}
 .tv.game-active .tv-game-tools button{min-height:44px;padding:8px 12px;white-space:nowrap}
+.tv.game-active .tv-game-tools .toolbar-icon{width:20px;height:20px;flex:none}
 .tv.game-active .match-top{display:none}
 .tv.game-active .win-banner{margin-right:308px}
 .tv.game-active .game-layout{display:block;min-height:0;padding-right:308px}
@@ -149,6 +150,10 @@
   .tv.game-active .tv-game-toolbar{flex-wrap:wrap}
   .tv.game-active .tv-game-tools{gap:6px}
   .tv.game-active .tv-game-tools button{padding-right:8px;padding-left:8px}
+}
+@media(max-width:900px){
+  .tv.game-active .tv-game-tool-label{display:none}
+  .tv.game-active .tv-game-tools button{min-width:42px;padding-right:8px;padding-left:8px}
 }
 
 .tv.tv-results .site-header,.tv.tv-results .remote-hint{display:none}
