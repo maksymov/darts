@@ -18,7 +18,7 @@
   let commentator = storage.getItem('darts.commentator') === null ? effects : storage.getItem('darts.commentator') !== 'false';
   let comment = idleComment('', game ? game.players.find(p=>p.id===game.activeId).name : ''), lastCommentAt = 0, cardRequest = 0, cardExport = null;
   let draft = { mode: 'x01', total: 501, players: game ? game.players.map(p => ({ name:p.name, avatar:p.avatar })) : [{name:'Игрок 1',avatar:'🎯'},{name:'Игрок 2',avatar:'⚡'}] };
-  let modalType = '', modalData = {}, returnFocus = '', toastTimer, commentatorToastTimer;
+  let modalType = '', modalData = {}, returnFocus = '', toastTimer;
   const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
   const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
   function persist() {
@@ -35,8 +35,6 @@
     document.documentElement.classList.toggle('tv-results', view === 'game' && !!game && G.finished(game));
     document.documentElement.classList.toggle('score-entry-active', view === 'game' && !!$('score-input'));
     document.documentElement.classList.toggle('sector-game', view === 'game' && !!game && game.mode === 'sectors');
-    document.documentElement.classList.toggle('nine-players-game', view === 'game' && !!game && game.players.length === 9);
-    document.documentElement.classList.toggle('compact-players-game', view === 'game' && !!game && (game.players.length === 2 || game.players.length === 3));
     document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'dark' ? '#212529' : '#f8f9fa';
   }
   if (themeMedia.addEventListener) themeMedia.addEventListener('change', applyTheme);
@@ -61,103 +59,62 @@
     applyTheme();
     fitPlayers();
     if (focus) focusTo(focus, scrollFocus);
+    if (['key-five','sector-hit','score-input'].includes(focus)) revealActivePlayer();
+  }
+  function revealActivePlayer() {
+    const card = document.querySelector('.player-card.active');
+    if (!card) return;
+    const phone = matchMedia('(max-width:600px)').matches;
+    const main = $('main'), rect = card.getBoundingClientRect();
+    const top = (phone ? 0 : main.getBoundingClientRect().top) + 12;
+    const bottom = (phone ? document.querySelector('.game-sidebar').getBoundingClientRect().top : innerHeight) - 12;
+    const delta = rect.bottom > bottom ? rect.bottom - bottom : rect.top < top ? rect.top - top : 0;
+    if (phone) window.scrollBy(0, delta);
+    else main.scrollTop += delta;
   }
   function fitPlayers() {
     const grid = document.querySelector('.players-grid');
-    if (!grid || !game || !grid.children.length) return;
-    const main = $('main'), history = document.querySelector('.history');
-    const savedMainScroll = main.scrollTop, savedWindowScroll = window.scrollY;
-    function restoreScroll() {
-      main.scrollTop = savedMainScroll;
-      if (window.scrollY !== savedWindowScroll) window.scrollTo(window.scrollX, savedWindowScroll);
-    }
-    grid.style.removeProperty('--player-columns');
-    grid.style.removeProperty('--player-scale');
-    grid.style.removeProperty('--player-height');
-    grid.style.removeProperty('--player-rows');
-    grid.style.removeProperty('--player-row-height');
-    const count = grid.children.length;
-    const compact = count === 2 || count === 3;
-    const mobilePortrait = matchMedia('(max-width: 600px) and (orientation: portrait)').matches;
-    const mobileLandscape = matchMedia('(max-width: 900px) and (orientation: landscape)').matches;
-    const mobilePlayerGrid = mobilePortrait || mobileLandscape;
-    grid.classList.remove('adaptive-players', 'fill-players');
-    grid.classList.toggle('mobile-player-grid', mobilePlayerGrid);
-    grid.classList.toggle('single-player-grid', mobilePlayerGrid && count === 1);
-    if (!compact && !mobilePlayerGrid) grid.classList.add('fill-players');
-    const scrollOffset = window.scrollY + main.scrollTop;
-    const controls = document.querySelector('.score-controls') || (game.mode === 'sectors' ? document.querySelector('.game-sidebar') : null);
-    const controlsRect = controls?.getBoundingClientRect();
-    const controlsBottom = controlsRect && getComputedStyle(controls).position === 'fixed'
-      ? controlsRect.top + scrollOffset
-      : Infinity;
-    const available = Math.min(window.innerHeight, main.getBoundingClientRect().bottom + window.scrollY, controlsBottom) - 8;
-    const height = Math.max(0, available - grid.getBoundingClientRect().top - scrollOffset);
-    if (mobilePlayerGrid) {
-      grid.classList.remove('fill-players');
-      grid.classList.add('adaptive-players');
-      grid.style.setProperty('--player-columns', count === 1 ? '1' : '2');
-      grid.style.setProperty('--player-scale', count === 1 ? '30px' : '22px');
-      restoreScroll();
-      return;
-    }
-    if (count <= 4 && grid.getBoundingClientRect().bottom + scrollOffset <= available &&
-        (!compact || historyExpanded || history.getBoundingClientRect().bottom + scrollOffset <= available)) {
-      if (!compact) grid.style.setProperty('--player-height', `${height}px`);
-      restoreScroll();
-      return;
-    }
-    grid.classList.add('adaptive-players');
-    const desired = count === 9 ? 3 : Math.ceil(Math.sqrt(count * 1.6));
-    const maxColumns = Math.min(count, 15, Math.max(1, Math.floor(grid.clientWidth / 60)));
-    const center = Math.min(desired, maxColumns);
-    const columnsToTry = Array.from(new Set([center, center - 1, center + 1, center - 2, center + 2, maxColumns, maxColumns - 1]))
-      .filter(columns => columns >= 1 && columns <= maxColumns);
-    const scales = count === 9
-      ? [3, 2.8, 2.6, 2.4, 2.2, 2, 1.8, 1.6, 1.4, 1.2, 1, .9, .8, .7, .6, .5, .4, .3]
-      : [1, .9, .8, .7, .6, .5, .4, .3];
-    let best = null, preferred = null;
-    for (const columns of columnsToTry) {
-      grid.style.setProperty('--player-columns', columns);
-      const measurements = [];
-      function measure(index) {
-        if (measurements[index]) return measurements[index];
-        const scale = scales[index];
-        grid.style.setProperty('--player-scale', `${16 * scale}px`);
-        const gridRect = grid.getBoundingClientRect();
-        const bottom = gridRect.bottom + window.scrollY + main.scrollTop;
-        const cardsFit = bottom <= available;
-        const historyFits = cardsFit && (historyExpanded || history.getBoundingClientRect().bottom + window.scrollY + main.scrollTop <= available);
-        const score = (compact && historyFits ? 10000 : cardsFit ? 5000 : 0) + scale * 1000 -
-          Math.max(0, bottom - available) * 20 -
-          Math.abs(columns - desired) * 35 - (count % columns ? 10 : 0);
-        return measurements[index] = {columns, scale, score, cardsFit, historyFits};
-      }
-      function largestFit(property) {
-        if (!measure(scales.length - 1)[property]) return null;
-        let low = 0, high = scales.length - 1;
-        while (low < high) {
-          const middle = Math.floor((low + high) / 2);
-          if (measure(middle)[property]) high = middle;
-          else low = middle + 1;
-        }
-        return measure(low);
-      }
-      const candidate = (compact && largestFit('historyFits')) || largestFit('cardsFit') || measure(scales.length - 1);
-      if (!best || candidate.score > best.score) best = candidate;
-      if (count === 9 && columns === 3) preferred = candidate;
-    }
-    if (preferred && preferred.cardsFit) best = preferred;
-    grid.style.setProperty('--player-columns', best.columns);
-    grid.style.setProperty('--player-scale', `${16 * best.scale}px`);
-    if (!compact && best.cardsFit) grid.style.setProperty('--player-height', `${height}px`);
-    restoreScroll();
+    if (!grid || !game) return;
+    const phone = matchMedia('(max-width:600px)').matches;
+    const short = matchMedia('(max-height:500px)').matches;
+    const main = $('main'), sidebar = document.querySelector('.game-sidebar');
+    const top = grid.getBoundingClientRect().top + main.scrollTop + window.scrollY;
+    const bottom = phone && !G.finished(game) ? sidebar.getBoundingClientRect().top : window.innerHeight;
+    const available = Math.max(0, bottom - top - 16);
+    const layout = window.DartsLayout.arrange(game.players.length, grid.clientWidth, available, phone || short);
+    const gap = phone ? 6 : 12;
+    const minimum = phone ? 160 : short ? 180 : 220;
+    const maxHeight = phone ? 180 : G.finished(game) ? 240 : Infinity;
+    const height = Math.max(minimum, Math.min(maxHeight, (available - gap * (layout.rows.length - 1)) / layout.rows.length));
+    const cardWidth = (grid.clientWidth - gap * (layout.columns - 1)) / layout.columns;
+    const digits = Math.max(...Array.from(grid.querySelectorAll('.remaining'), el => el.textContent.length));
+    const scoreWidthLimit = (cardWidth - (phone ? 14 : 32)) / (digits * .62);
+    grid.style.setProperty('--grid-tracks', layout.columns * 2);
+    grid.style.setProperty('--card-gap', gap + 'px');
+    grid.style.setProperty('--card-height', Math.round(height) + 'px');
+    grid.style.setProperty('--score-size', Math.floor(Math.min(scoreWidthLimit, Math.max(phone ? 28 : 36, Math.min(phone ? 64 : 112, cardWidth * .38, height * .3)))) + 'px');
+    grid.dataset.columns = layout.columns;
+    grid.dataset.rows = layout.rows.length;
+    Array.from(grid.children).forEach((card, i) => {
+      card.style.gridColumn = layout.cells[i].column + ' / span 2';
+      card.style.gridRow = layout.cells[i].row;
+    });
   }
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(fitPlayers, 100);
+    resizeTimer = setTimeout(() => { fitPlayers(); revealActivePlayer(); }, 100);
   });
+  function fitDialogViewport() {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    $('modal').style.setProperty('--dialog-viewport-height', viewport.height + 'px');
+    $('modal').style.setProperty('--dialog-viewport-top', viewport.offsetTop + 'px');
+  }
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', fitDialogViewport);
+    visualViewport.addEventListener('scroll', fitDialogViewport);
+  }
   function homeHTML() {
     const resume = game ? `<div class="resume-banner"><span class="avatar" aria-hidden="true">${G.winner(game) ? '🏆' : '↗'}</span><div><strong>${G.winner(game) ? 'Последняя партия' : 'Ваша партия ждёт'}</strong><p>${esc(modeName(game))} · ${game.players.length} ${plural(game.players.length,'игрок','игрока','игроков')} · ${game.turns.length} ${game.mode==='sectors'?plural(game.turns.length,'событие','события','событий'):plural(game.turns.length,'ход','хода','ходов')}</p></div><button id="resume" class="primary" data-action="resume">${G.winner(game) ? 'Посмотреть итог' : 'Продолжить игру'} →</button></div>` : '';
     const modes = [{mode:'x01',total:301,title:'Быстрая партия',sub:'Разминка или первый матч',symbol:'301'},{mode:'x01',total:501,title:'Классика',sub:'Большая игра до нуля',symbol:'501'},{mode:'sectors',total:501,title:'По секторам',sub:'Путь от 1 до яблочка',symbol:'◎'}];
@@ -178,11 +135,12 @@
       const isActive = !complete && (!win || finishingRound) && p.id === game.activeId, leader = leaders.length === 1 && leaders[0].id === p.id && rows.length > 1;
       const remaining = game.mode === 'x01' ? p.remaining : (G.SECTORS[p.progress] || '✓');
       const gap = game.mode === 'x01' ? p.remaining - best : best - p.progress;
-      const statusLabel = gap ? (game.mode === 'x01' ? '+' : '') + gap + ' отстал' : leader ? 'Лидер' : 'На равных';
+      const turnLabel = isActive ? '● Ваш ход' : winners.some(w=>w.id===p.id) ? (draw?'Ничья':'Победитель') : '';
+      const gapLabel = gap ? `<strong>+${gap}</strong><span>до лидера</span>` : leader ? 'Лидер' : 'На равных';
       const bottomLabel = game.mode === 'x01'
-        ? `<span><span class="last-label-full">Последний:</span><span class="last-label-short">Посл.:</span> <strong>${p.last===null?'—':esc(p.last)}</strong></span><span>Макс.: <strong>${p.best===null?'—':p.best}</strong></span>`
-        : `<span>${p.last || '—'}</span>`;
-      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><div class="player-top"><span class="avatar" aria-hidden="true">${p.avatar}</span><div class="player-title"><h2 class="${leader?'leader-name':''}"><button class="player-name-menu" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}" aria-haspopup="dialog">${esc(p.name)} ${leader?'<span aria-label="лидер">♛</span>':''}</button></h2></div></div><div class="turn-label ${gap?'has-gap':''}">${statusLabel}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom">${bottomLabel}</div></article>`;
+        ? `<span class="last-visit"><span>Ход: </span><strong>${p.last===null?'—':esc(p.last)}</strong></span><span class="best-visit" title="Лучший засчитанный ход">Макс.: <strong>${p.best===null?'—':p.best}</strong></span>`
+        : `<span class="last-visit" title="${esc(p.last||'Ещё не бросал')}">${esc(p.last||'—')}</span>`;
+      return `<article class="player-card ${isActive?'active':''}" aria-label="${esc(p.name)}, ${game.mode==='x01'?'осталось '+remaining:'цель '+remaining}${isActive?', сейчас ходит':''}"><button class="player-identity" data-action="player-menu" data-player="${p.id}" aria-label="Настройки игрока ${esc(p.name)}" aria-haspopup="dialog"><span class="avatar" aria-hidden="true">${p.avatar}</span><span class="player-name ${leader?'leader-name':''}" title="${esc(p.name)}">${esc(p.name)}</span><span class="player-marker" aria-hidden="true">${leader?'♛':'⋯'}</span></button><div class="player-standing"><span class="leader-gap ${gap?'has-gap':''}">${gapLabel}</span>${turnLabel?`<span class="turn-label">${turnLabel}</span>`:''}</div><div class="remaining">${remaining}</div>${game.mode==='sectors'?`<div class="progress-bar" aria-label="Пройдено ${p.progress} из 22"><span style="width:${p.progress/22*100}%"></span></div>`:''}<div class="player-bottom">${bottomLabel}</div></article>`;
     }).join('');
     const controller = win && !finishingRound
       ? '<aside class="controller"><div class="eyebrow">ДО НОВОЙ ВСТРЕЧИ У МИШЕНИ</div><h2>Отличная партия.</h2><p class="mode-description">Результаты сохранены. Можно сыграть ещё раз с тем же составом или выбрать новый режим.</p><button class="submit-score" data-action="home">Выбрать игру →</button></aside>'
@@ -219,8 +177,10 @@
     return html+`</tbody></table></div>${count>5?`<button class="history-more" data-action="history">${historyExpanded?'Свернуть историю':'Все круги · '+count}</button>`:''}`;
   }
   function openModal(title,html,type,data) {
+    fitDialogViewport();
     if(modalType==='card')releaseCard();
     document.querySelector('.dialog').classList.toggle('match-card-dialog',type==='card');
+    document.querySelector('.dialog').classList.toggle('name-dialog',type==='name');
     if($('modal').hidden)returnFocus=token(document.activeElement);
     modalType=type||'';modalData=data||{};
     $('dialog-title').textContent=title;$('dialog-content').innerHTML=html;$('modal').hidden=false;
@@ -231,7 +191,7 @@
   }
   function closeModal() {
     if(modalType==='card')releaseCard();
-    document.querySelector('.dialog').classList.remove('match-card-dialog','native-name-input');
+    document.querySelector('.dialog').classList.remove('match-card-dialog','native-name-input','name-dialog');
     $('modal').hidden=true;modalType='';modalData={};$('main').removeAttribute('aria-hidden');
     document.querySelectorAll('[inert]').forEach(el=>el.inert=false);document.body.style.overflow='';focusTo(returnFocus);
   }
@@ -239,7 +199,7 @@
   function nameDialog(index,source,pendingPlayer) {
     const p=pendingPlayer||(source==='draft'?draft.players[index]:game.players.find(p=>p.id===index));
     const nativeKeyboard=matchMedia('(max-width: 900px) and (pointer: coarse)').matches;
-    openModal('Имя и аватар',`<label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" ${nativeKeyboard?'inputmode="text"':'inputmode="none" readonly'} value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru',!p.name.length)}</div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
+    openModal('Имя и аватар',`<div class="name-dialog-fields"><label class="field-label" for="player-name">Как вас записать?</label><input id="player-name" maxlength="24" ${nativeKeyboard?'inputmode="text"':'inputmode="none" readonly'} value="${esc(p.name)}"><div class="avatar-picker" aria-label="Выберите аватар">${G.AVATARS.map(a=>`<button data-action="avatar" data-value="${a}" class="${a===p.avatar?'selected':''}" aria-label="Аватар ${a}" aria-pressed="${a===p.avatar}">${a}</button>`).join('')}</div><div id="letter-board">${lettersHTML('ru',!p.name.length)}</div></div><div class="dialog-actions"><button data-action="close">Отмена</button><button class="primary" data-action="save-name">Сохранить</button></div>`,'name',{index,source,player:pendingPlayer,avatar:p.avatar,lang:'ru'});
     document.querySelector('.dialog').classList.toggle('native-name-input',nativeKeyboard);
   }
   function lettersHTML(lang,uppercase=true) { return `<div class="name-keyboard" aria-label="Буквы имени">${(lang==='ru'?'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ':'ABCDEFGHIJKLMNOPQRSTUVWXYZ').split('').map(c=>{const letter=uppercase?c:c.toLowerCase();return `<button data-action="letter" data-value="${letter}">${letter}</button>`;}).join('')}<button class="wide" data-action="letter" data-value="space">Пробел</button><button class="wide" data-action="letter" data-value="delete">⌫</button><button class="wide" data-action="letter" data-value="clear">Очистить</button><button class="wide" data-action="alphabet">${lang==='ru'?'ABC':'АБВ'}</button></div>`; }
@@ -262,26 +222,12 @@
     if(!commentator)return '';
     const win=G.winner(game);
     const winners=G.winners(game), resultEvent=winners.length>1?'draw':'win', resultNames=winners.map(p=>p.name).join(', ');
-    if(win && (comment.event!==resultEvent||comment.player!==resultNames)){comment=E.commentFor(game,comment.text);showMobileComment();}
+    if(win && (comment.event!==resultEvent||comment.player!==resultNames)){comment=E.commentFor(game,comment.text);}
     if(!win && (comment.event==='win'||comment.event==='draw')) {
       const active=game.players.find(p=>p.id===game.activeId);
       comment=idleComment(`${active.name}, пересчёт принят. Никто ничего не видел.`,active.name);
     }
     return `<aside class="donkey-commentator mood-${comment.mood}" aria-label="Ишак-комментатор"><div class="donkey-portrait" aria-hidden="true"><img src="static/img/ishak2.png" alt=""><span class="donkey-mood">${comment.mood==='proud'?'★':comment.mood==='amazed'?'!':comment.mood==='oops'?'?':'•'}</span></div><div class="donkey-copy"><div class="donkey-label">ИШАК ${esc(comment.label)}${comment.player?`<span> · ${esc(comment.player)}</span>`:''}</div><p>${esc(comment.text)}</p></div></aside>`;
-  }
-  function showMobileComment() {
-    if(!commentator||!window.matchMedia('(max-width:600px), (max-height:500px) and (orientation:landscape)').matches)return;
-    const notice=$('commentator-toast'), html=commentatorHTML();
-    if(!html)return;
-    clearTimeout(commentatorToastTimer);
-    notice.innerHTML=html;notice.hidden=false;
-    requestAnimationFrame(()=>notice.classList.add('visible'));
-    commentatorToastTimer=setTimeout(()=>{notice.classList.remove('visible');notice.hidden=true;notice.replaceChildren();},4000);
-  }
-  function hideMobileComment() {
-    clearTimeout(commentatorToastTimer);
-    $('commentator-toast').hidden=true;
-    $('commentator-toast').replaceChildren();
   }
   function updateComment() {
     if(!commentator)return;
@@ -289,7 +235,7 @@
     if(!next)return;
     const urgent=['win','draw','maximum','bust'].includes(next.event);
     if(!urgent&&Date.now()-lastCommentAt<6000)return;
-    comment=next;lastCommentAt=Date.now();showMobileComment();
+    comment=next;lastCommentAt=Date.now();
   }
   function releaseCard() {
     cardRequest++;
@@ -390,10 +336,10 @@
     if(action==='match-card'){openMatchCard();return;}
     if(action==='download-card'){downloadCard();return;}
     if(action==='share-card'){shareCard();return;}
-    if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));if(!commentator)hideMobileComment();render();settingsDialog();focusTo(token(button));return;}
+    if(action==='commentator'){commentator=!commentator;storage.setItem('darts.commentator',String(commentator));render();settingsDialog();focusTo(token(button));return;}
     if(action==='theme'){theme=value;storage.setItem('theme',theme);applyTheme();settingsDialog();focusTo(token(button));return;}
     if(action==='effects'){effects=!effects;storage.setItem('darts.effects',String(effects));settingsDialog();focusTo(token(button));return;}
-    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают кнопку; во время игры по секторам засчитывают попадание</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки в X01</span></div><div class="help-row"><strong>Точка на нампаде</strong><span>В секторах передаёт ход; в X01 переключает игрока без записи хода</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
+    if(action==='help'){openModal('Играйте с любого экрана',`<p>Телефон, планшет, компьютер или телевизор — все действия доступны кнопками.</p><div class="help-row"><strong>Стрелки ↑ ↓ ← →</strong><span>Перемещают фокус</span></div><div class="help-row"><strong>OK / Enter</strong><span>Нажимают выбранную кнопку</span></div><div class="help-row"><strong>Назад / Esc</strong><span>Закрывают окно или открывают главное меню</span></div><div class="help-row"><strong>Цифры 0–9</strong><span>Вводят очки в X01</span></div><div class="help-row"><strong>Enter на нампаде</strong><span>В секторах засчитывает попадание; в X01 записывает введённые очки</span></div><div class="help-row"><strong>Точка на нампаде</strong><span>В секторах передаёт ход; в X01 переключает игрока без записи хода</span></div><div class="help-row"><strong>Tab / Shift + Tab</strong><span>Следующий / предыдущий элемент</span></div><p style="margin-top:18px">Для ввода используйте клавиатуру приложения. Если браузер использует стрелки для указателя, переключите пульт в режим навигации. Кнопка браузера «Назад» может работать по правилам самого телевизора.</p><button class="primary submit-score" data-action="close">Понятно</button>`,'help');return;}
     if(action==='about'){openModal('Дартс. Ваш домашний клуб.',`<p>Счёт для игр с друзьями, без регистрации. Текущая партия хранится только в этом браузере.</p><div class="menu-stack"><a href="https://github.com/maksymov/darts" target="_blank" rel="noopener">Код проекта на GitHub ↗</a><a href="https://vk.com/maksymov.vlad" target="_blank" rel="noopener">Автор ВКонтакте ↗</a><a href="https://t.me/MaKcuMoB" target="_blank" rel="noopener">Написать автору ↗</a><a href="https://yoomoney.ru/to/410011276146968" target="_blank" rel="noopener">Поддержать проект ↗</a></div>`,'about');return;}
     if(action==='mode'){draft.mode=value;draft.total=Number(button.dataset.total);render(token(button));return;}
     if(action==='custom-total'){numberDialog('Свой стартовый счёт',draft.total,'custom');return;}
@@ -469,7 +415,7 @@
     const editing=input&&!event.target.readOnly;
     if(key==='Tab'&&!$('modal').hidden){const list=controls($('modal')),i=list.indexOf(document.activeElement);if(event.shiftKey&&i<=0){event.preventDefault();list[list.length-1].focus();}else if(!event.shiftKey&&i===list.length-1){event.preventDefault();list[0].focus();}return;}
     if(key==='Escape'||key==='BrowserBack'||key==='GoBack'){event.preventDefault();back();return;}
-    if((decimal||key==='Enter') && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
+    if((decimal||numpadEnter) && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='sectors' && !G.winner(game)){
       event.preventDefault();if(!event.repeat)record(0,decimal?'miss':'hit');return;
     }
     if(decimal && event.target.id!=='update-reload' && $('modal').hidden && view==='game' && game && game.mode==='x01' && (!G.winner(game)||game.finishingRound&&!G.finished(game))){

@@ -1,0 +1,112 @@
+/* Keep the title and name actions in view; only the fields scroll. */
+.modal-backdrop{
+  top:var(--dialog-viewport-top,0px);
+  bottom:auto;
+  height:var(--dialog-viewport-height,100%);
+  padding:16px;
+  padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+  overflow:hidden;
+}
+.dialog,.tv .dialog{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  max-width:640px;
+  max-height:calc(100vh - 32px);
+  max-height:calc(var(--dialog-viewport-height,100dvh) - 32px);
+  min-height:0;
+  padding:0;
+  overflow:hidden;
+}
+.dialog.match-card-dialog,.tv .dialog.match-card-dialog{max-width:1000px}
+.dialog .dialog-header,.tv .dialog .dialog-header{
+  position:static;
+  flex:0 0 auto;
+  gap:16px;
+  margin:0;
+  padding:16px 20px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+}
+.dialog-header h2{min-width:0;overflow-wrap:anywhere}
+.dialog .dialog-header .icon-button{flex:0 0 44px;min-width:44px;min-height:44px}
+.dialog #dialog-content{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scroll-padding-block:12px;
+  padding:20px;
+}
+.dialog .dialog-actions,.tv .dialog .dialog-actions{
+  position:static;
+  flex:0 0 auto;
+  background:var(--surface);
+}
+.dialog button,.tv .dialog button{min-height:44px}
+.dialog.name-dialog #dialog-content{
+  display:flex;
+  flex-direction:column;
+  padding:0;
+  overflow:hidden;
+}
+.name-dialog-fields{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scroll-padding-block:12px;
+  padding:18px 20px 14px;
+}
+.name-dialog .dialog-actions,.tv .name-dialog .dialog-actions{
+  margin:0;
+  gap:10px;
+  padding:12px 20px 16px;
+  border-top:1px solid var(--line);
+}
+.name-dialog .dialog-actions button{flex:1 1 0;min-width:0}
+.name-dialog .field-label{margin-bottom:8px}
+.name-dialog #player-name{min-height:48px;font-size:20px;scroll-margin-block:12px}
+.name-dialog .avatar-picker{
+  grid-template-columns:repeat(8,minmax(0,1fr));
+  gap:6px;
+  margin:12px 0;
+  padding:4px;
+}
+.name-dialog .avatar-picker button{min-width:0;min-height:44px;padding:4px}
+.name-dialog .name-keyboard,.tv .name-dialog .name-keyboard{
+  grid-template-columns:repeat(8,minmax(0,1fr));
+  gap:6px;
+  margin:12px 0 0;
+  padding:4px;
+}
+.name-dialog .name-keyboard button,.tv .name-dialog .name-keyboard button{
+  min-width:0;
+  min-height:44px;
+  padding:6px 3px;
+  font-size:18px;
+  line-height:1.15;
+  scroll-margin-block:12px;
+}
+.name-dialog .name-keyboard .wide,.tv .name-dialog .name-keyboard .wide{font-size:13px}
+.name-dialog.native-name-input #letter-board{display:none}
+@media(max-width:600px){
+  .dialog,.tv .dialog{max-height:calc(100vh - 24px);max-height:calc(var(--dialog-viewport-height,100dvh) - 24px);border-radius:18px}
+  .dialog .dialog-header,.tv .dialog .dialog-header{padding:12px 16px;gap:10px}
+  .dialog .dialog-header h2{font-size:21px}
+  .dialog #dialog-content{padding:16px}
+  .name-dialog-fields{padding:14px 16px}
+  .name-dialog .dialog-actions,.tv .name-dialog .dialog-actions{padding:12px 16px}
+  .name-dialog .avatar-picker{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .name-dialog .name-keyboard,.tv .name-dialog .name-keyboard{grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+}
+@media(max-width:390px){
+  .name-dialog .name-keyboard,.tv .name-dialog .name-keyboard{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+@media(max-height:500px){
+  .dialog .dialog-header,.tv .dialog .dialog-header{padding-top:8px;padding-bottom:8px}
+  .name-dialog .dialog-actions,.tv .name-dialog .dialog-actions{padding-top:8px;padding-bottom:8px}
+  .name-dialog-fields{padding-top:12px;padding-bottom:12px}
+}
